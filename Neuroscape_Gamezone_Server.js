@@ -102,15 +102,6 @@
 
     // Procedural Functions
 
-    // function scan() {
-    //     var searchRadius = 100;
-    //     var entityList = Entities.findEntities(currentProperties.position, searchRadius);
-    //     entityList.forEach(function(ent) {
-    //         var name = getProps(ent, ["name"]).name;
-    //         log(LOG_VALUE, "Entity Name: ", name);
-    //     });
-    // }
-
     // Entity Definition
     function Neuroscape_Gamezone_Server() {
         self = this;
@@ -165,19 +156,13 @@
 
             if (currentBeat % 2 === 0) {
                 stringDirection = JSON.stringify(directionOne);
-                log(LOG_VALUE, "boundaryLeftProps.position", boundaryLeftProps.position);
-                log(LOG_VALUE, "vec(0, 0.5, 0)", vec(0, 0.5, 0));
-                log(LOG_VALUE, "SUM", Vec3.sum(boundaryLeftProps.position, vec(0, 0.5, 0)));
-                stringStartPosition = JSON.stringify(Vec3.sum(boundaryLeftProps.position, vec(0, 0.65, 0)));
-                log(LOG_VALUE, "stringStartPosition", stringStartPosition);
+                stringStartPosition = JSON.stringify(boundaryLeftProps.position);
+                log(LOG_ARCHIVE, "stringStartPosition", stringStartPosition);
                 boundary = BOUNDARY_LEFT;
             } else {
                 stringDirection = JSON.stringify(directionTwo);
-                log(LOG_VALUE, "boundaryRightProps.position", boundaryRightProps.position);
-                log(LOG_VALUE, "vec(0, 0.5, 0)", vec(0, 0.5, 0));
-                log(LOG_VALUE, "SUM", Vec3.sum(boundaryRightProps.position, vec(0, 0.5, 0)));
-                stringStartPosition = JSON.stringify(Vec3.sum(boundaryRightProps.position, vec(0, 0.65, 0)));
-                log(LOG_VALUE, "stringStartPosition", stringStartPosition);
+                stringStartPosition = JSON.stringify(boundaryRightProps.position);
+                log(LOG_ARCHIVE, "stringStartPosition", stringStartPosition);
                 boundary = BOUNDARY_RIGHT;
             }
             Audio.playSound(sound, {

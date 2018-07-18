@@ -17,24 +17,9 @@
     
     var axisAlignedOrientation = Util.Maths.axisAlignedOrientation,
         getNameProps = Util.Entity.getNameProps,
+        inFrontOf = Util.Avatar.inFrontOf
         makeColor = Util.Color.makeColor,
         vec = Util.Maths.vec;
-
-    function inFrontOf(distance, position, orientation) {
-        var axisAligned = axisAlignedOrientation(MyAvatar.orientatio);
-        return Vec3.sum(position || MyAvatar.position,
-            Vec3.multiply(distance, axisAligned[1])
-        );
-    }
-
-    function returnDirection(axisOrientation) {
-        if (axisOrientation.x === -1 ||  axisOrientation.x === 1) {
-            return "front";
-        }
-        if (axisOrientation.z === -1 ||  axisOrientation.z === 1) {
-            return "right";
-        }
-    }
 
     // Log Setup
     var LOG_CONFIG = {},
@@ -219,11 +204,7 @@
                 color,
                 stringified,
                 userData = {},
-                getDirection = returnDirection(axisAlignedOrientation(avatarOrientation)[1]),
-                direction = 
-                    getDirection === "right" 
-                    ? Quat.getRight(axisAlignedOrientation(avatarOrientation)[0])
-                    : Quat.getFront(axisAlignedOrientation(avatarOrientation)[0]),
+                direction = Quat.getRight(avatarOrientation),
                 BOUNDARY_WIDTH = 0.4,
                 BOUNDARY_HEIGHT = 1,
                 BOUNDARY_DEPTH = 0.4,
@@ -259,7 +240,7 @@
             entID = createBoundaryBoxEntity(
                 name,                 
                 boundaryPosition,
-                axisAlignedOrientation(avatarOrientation)[0], 
+                avatarOrientation,
                 vec(BOUNDARY_WIDTH, BOUNDARY_HEIGHT, BOUNDARY_DEPTH), 
                 color, 
                 stringified,
@@ -282,7 +263,7 @@
             ORB_HEIGHT = 0.3,
             ORB_DEPTH = 0.3,
             DISTANCE_LEFT = 0,
-            DISTANCE_HEIGHT = 0.5,
+            DISTANCE_HEIGHT = 0,
             DISTANCE_BACK = 0;
 
         orbPosition = Vec3.sum(
@@ -400,7 +381,6 @@
             color,
             stringified,
             userData = {},
-            getDirection = returnDirection(axisAlignedOrientation(avatarOrientation)[1]),
             direction = Quat.getRight(avatarOrientation),
             BUTTON_WIDTH = 0.2,
             BUTTON_HEIGHT = 0.2,
@@ -425,7 +405,7 @@
         entID = createStartButtonEntity(
             name,                 
             buttonPosition,
-            axisAlignedOrientation(avatarOrientation)[0],
+            avatarOrientation,
             vec(BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_DEPTH), 
             color, 
             stringified,
@@ -440,7 +420,7 @@
     createGameZone();
     createBoundaryBoxes();
     createOrb();
-    // createDrumstickModels();
+    createDrumstickModels();
     createStartButton();
 
     Settings.setValue(BASE_NAME, entityNames);
