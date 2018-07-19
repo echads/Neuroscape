@@ -17,7 +17,7 @@
     
     var axisAlignedOrientation = Util.Maths.axisAlignedOrientation,
         getNameProps = Util.Entity.getNameProps,
-        inFrontOf = Util.Avatar.inFrontOf
+        inFrontOf = Util.Avatar.inFrontOf,
         makeColor = Util.Color.makeColor,
         vec = Util.Maths.vec;
 
@@ -102,7 +102,35 @@
             dimensions: dimensions,
             color: color,
             visible: true,
+            dynamic: false,
+            collisionless: false,
+            friction: 10.0,
+            parentID: parentID,
+            userData: userData
+        };
+        var id = Entities.addEntity(properties);
+        return id;
+    }
+
+    function createBoundaryDecoraterBoxEntity(name, position, rotation, dimensions, color, userData, parentID) {
+        name = name || 1;
+        dimensions = dimensions || vec(1, 1, 1);
+        color = color || makeColor(1, 1, 1);
+        userData = userData || {};
+        var properties = {
+            name: name,
+            type: "Box",
+            position: position,
+            rotation: rotation,
+            locked: false,
+            script: boundaryClientScript,
+            serverScripts: boundaryServerScript,
+            dimensions: dimensions,
+            color: color,
+            visible: true,
+            dynamic: false,
             collisionless: true,
+            friction: 10.0,
             parentID: parentID,
             userData: userData
         };
@@ -126,7 +154,7 @@
             dimensions: dimensions,
             color: color,
             visible: true,
-            collisionless: true,
+            collisionless: false,
             parentID: parentID,
             userData: userData
         };
@@ -147,9 +175,13 @@
             script: movingOrbClientScript,
             serverScripts: movingOrbServerScript,
             dimensions: dimensions,
+            damping: 0,
+            friction: 10.0,
+            angularDamping: 1.0,
             color: color,
             visible: true,
-            collisionless: true,
+            collisionless: false,
+            dynamic: true,
             parentID: parentID,
             userData: userData
         };
@@ -166,10 +198,13 @@
             type: "Model",
             modelURL: url,
             position: position,
+            script: drumStickClientScript,
             rotation: rotation,
             locked: false,
             dimensions: dimensions,
-            collisionless: true,
+            collisionless: false,
+            dynamic: true,
+            shapeType: "simple-compound",
             parentID: parentID,
             userData: userData
         };
@@ -205,10 +240,10 @@
                 stringified,
                 userData = {},
                 direction = Quat.getRight(avatarOrientation),
-                BOUNDARY_WIDTH = 0.4,
+                BOUNDARY_WIDTH = 0.025,
                 BOUNDARY_HEIGHT = 1,
                 BOUNDARY_DEPTH = 0.4,
-                DISTANCE_RIGHT = 1,
+                DISTANCE_RIGHT = 0.65,
                 DISTANCE_HEIGHT = 0,
                 DISTANCE_BACK = 1;
             
@@ -251,6 +286,98 @@
         });
     }
 
+    function createBoundaryDecoratorBoxes() {
+        [LEFT, RIGHT].forEach(function (side) {
+            var name,
+                name2,
+                entID,
+                endID2,
+                boundaryPosition,
+                boundaryPosition2,
+                color,
+                stringified,
+                userData = {},
+                direction = Quat.getRight(avatarOrientation),
+                ORB_DIAMATER = 0.3,
+                BOUNDARY_WIDTH = 0.025,
+                BOUNDARY_HEIGHT = (1 - ORB_DIAMATER) / 2,
+                BOUNDARY_DEPTH = 0.4,
+                DISTANCE_RIGHT = 0.65,
+                DISTANCE_HEIGHT = 0,
+                DISTANCE_BACK = 1;
+            
+            if (side === RIGHT) {
+                log(LOG_VALUE, "centerPlacement", centerPlacement);
+                var adjustedCenterPlacement = Object.assign({}, centerPlacement);
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y - BOUNDARY_HEIGHT;
+                log(LOG_VALUE, "adjustedCenterPlacement", adjustedCenterPlacement);
+                boundaryPosition = Vec3.sum(
+                    Vec3.multiply(
+                        direction,
+                        DISTANCE_RIGHT - (ORB_DIAMATER / 2)
+                    ),
+                    adjustedCenterPlacement
+                );
+                adjustedCenterPlacement = Object.assign({}, centerPlacement);
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y + BOUNDARY_HEIGHT;
+                log(LOG_VALUE, "adjustedCenterPlacement", adjustedCenterPlacement);
+                boundaryPosition2 = Vec3.sum(
+                    Vec3.multiply(
+                        direction,
+                        DISTANCE_RIGHT - (ORB_DIAMATER / 2)
+                    ),
+                    adjustedCenterPlacement
+                );
+            } else {
+                var adjustedCenterPlacement = Object.assign({}, centerPlacement);
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y - BOUNDARY_HEIGHT;
+                boundaryPosition = Vec3.sum(
+                    Vec3.multiply(
+                        direction,
+                        -DISTANCE_RIGHT + (ORB_DIAMATER / 2)
+                    ),
+                    adjustedCenterPlacement
+                );
+                adjustedCenterPlacement = Object.assign({}, centerPlacement);
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y + BOUNDARY_HEIGHT;
+                boundaryPosition2 = Vec3.sum(
+                    Vec3.multiply(
+                        direction,
+                        -DISTANCE_RIGHT + (ORB_DIAMATER / 2)
+                    ),
+                    adjustedCenterPlacement
+                );
+            }
+            userData.BASE_NAME = { DEBUG: DEBUG };
+
+            userData.grabbableKey = { grabbable: false };
+            stringified = JSON.stringify(userData);
+            name = BASE_NAME + "Boundary_Decorater_Top" + side;
+            name2 = BASE_NAME + "Boundary_Decorater_Bottom" + side;
+            color = BLUE,
+            entID = createBoundaryDecoraterBoxEntity(
+                name,                 
+                boundaryPosition,
+                avatarOrientation,
+                vec(BOUNDARY_WIDTH, BOUNDARY_HEIGHT, BOUNDARY_DEPTH), 
+                color, 
+                stringified,
+                zoneID
+            );
+            entID2 = createBoundaryDecoraterBoxEntity(
+                name2,                 
+                boundaryPosition2,
+                avatarOrientation,
+                vec(BOUNDARY_WIDTH, BOUNDARY_HEIGHT, BOUNDARY_DEPTH), 
+                color, 
+                stringified,
+                zoneID
+            );
+            allEnts.push(entID, entID2);
+            entityNames.push(name, name2);
+        });
+    }
+    
     function createOrb() {
         var name,
             entID,
@@ -258,7 +385,6 @@
             color,
             stringified,
             userData = {},
-            damping = 0,
             ORB_WIDTH = 0.3,
             ORB_HEIGHT = 0.3,
             ORB_DEPTH = 0.3,
@@ -419,6 +545,7 @@
     // Main
     createGameZone();
     createBoundaryBoxes();
+    createBoundaryDecoratorBoxes();
     createOrb();
     createDrumstickModels();
     createStartButton();

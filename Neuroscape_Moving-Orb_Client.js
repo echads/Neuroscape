@@ -1,90 +1,158 @@
-/* globals Script, Entities, Controller*/
+
 (function () {
+    // Polyfill
+    Script.require("./Polyfills.js?" + Date.now())();
 
-    var _selfID;
+    // Helper Functions
+    var Util = Script.require("./Helper.js?" + Date.now());
+    var vec = Util.Maths.vec,
+        searchForEntityNames = Util.Entity.searchForEntityNames;
 
-    var LEFT_BOUNDARY_ID = "{0eedbea7-aea7-4807-bcbc-54e8b69a383f}";
-    var RIGHT_BOUNDARY_ID = "{eddd740b-7574-432b-94f1-ce5bb413bf62}";
+    // Log Setup
+    var LOG_CONFIG = {},
+        LOG_ENTER = Util.Debug.LOG_ENTER,
+        LOG_UPDATE = Util.Debug.LOG_UPDATE,
+        LOG_ERROR = Util.Debug.LOG_ERROR,
+        LOG_VALUE = Util.Debug.LOG_VALUE,
+        LOG_ARCHIVE = Util.Debug.LOG_ARCHIVE;
 
-    var ORIGIN_POINT = { x: 22.5, y: -11.26, z: 3.6 };
+    LOG_CONFIG[LOG_ENTER] = true;
+    LOG_CONFIG[LOG_UPDATE] = true;
+    LOG_CONFIG[LOG_ERROR] = true;
+    LOG_CONFIG[LOG_VALUE] = true;
+    LOG_CONFIG[LOG_ARCHIVE] = false;
+    var log = Util.Debug.log(LOG_CONFIG);
 
-    var diagnosticStartTime, mostRecentPointTimed, mostRecentTriggerTime, diagnosticEndTime;
-    var DIAGNOSTIC_LENGTH = 30000;
-    var DiagnosticOrb = function () { };
+    // Init 
+    var BASE_NAME = "Neuroscape_",
+        entityID,
+        name,
+        gameZoneID,
+        position,
+        startPosition,
+        audioCue = false, 
+        visualCue = false,
+        SEARCH_FOR_NAMES_TIMEOUT = 5000,
+        STICK_LEFT = "Neuroscape_Drumstick_Left",
+        STICK_RIGHT = "Neuroscape_Drumstick_Right",
+        BOUNDARY_LEFT = "Neuroscape_Boundary_Left",
+        BOUNDARY_RIGHT = "Neuroscape_Boundary_Right",
+        DIRECTION_ONE = "directionOne",
+        DIRECTION_TWO = "directionTwo",
+        DEBUG = false;
 
-    var diagnosticBeginKey = 'r';
-
-    var hasActiveDiagnostic = false;
-
-    var lastCollisionTime = Date.now();
-
-    var MAPPING_NAME = "Diagnostic Mapping";
-
-    function beginDiagnostic() {
-        print("Beginning Diagnostic");
-        hasActiveDiagnostic = true;
-        diagnosticStartTime = Date.now();
-        lastCollisionTime = Date.now();
-        Entities.callEntityServerMethod(_selfID, 'beginDiagnostic');
-        Entities.editEntity(_selfID, { 'velocity': { x: 1.0, y: 0.0, z: 0.0 }, 'position': ORIGIN_POINT });
-        var mapping = Controller.newMapping(MAPPING_NAME);
-        mapping.from(Controller.Standard.A).to(recordTriggerPull);
-        Controller.enableMapping(MAPPING_NAME);
-        Script.update.connect(update);
-    }
-
-    function endDiagnostic() {
-        print("Ending Diagnostic");
-        hasActiveDiagnostic = false;
-        diagnosticEndTime = Date.now();
-        Entities.callEntityServerMethod(_selfID, 'endDiagnostic');
-        Entities.editEntity(_selfID, { 'velocity': { x: 0.0, y: 0.0, z: 0.0 }, 'position': ORIGIN_POINT });
-        Script.update.disconnect(update);
-        Controller.disableMapping(MAPPING_NAME);
-    }
-
-    function recordTriggerPull() {
-        if (hasActiveDiagnostic) {
-            print("Trigger pull occurred: " + (Date.now() - lastCollisionTime) + "ms after last collision");
-        }
-    }
-
-    function update() {
-        if (Date.now() - diagnosticStartTime >= DIAGNOSTIC_LENGTH) {
-            endDiagnostic();
-        }
-    }
-
-    function enableDiagnosticTest(event) {
-        if (event.text === diagnosticBeginKey && !hasActiveDiagnostic) {
-            beginDiagnostic();
-        } else if (event.text === diagnosticBeginKey && hasActiveDiagnostic) {
-            endDiagnostic();
-        }
-    }
-
-    DiagnosticOrb.prototype = {
-
-        preload: function (entityID) {
-            _selfID = entityID;
-            Controller.keyReleaseEvent.connect(enableDiagnosticTest);
+    // Collections
+    var currentProperties = {},
+        userData = {},
+        userdataProperties = {},
+        collisionIDS = {
+            Neuroscape_Boundary_Left: null,
+            Neuroscape_Boundary_Right: null,
+            Neuroscape_Drumstick_Left: null,
+            Neuroscape_Drumstick_Right: null
         },
+        directionOne = {},
+        directionTwo = {},
+        collisionNames = Object.keys(collisionIDS);
 
+    // Constructor Functions
+    // Procedural Functions
+    // Entity Definition
+    function Neuroscape_MovingOrb_Client() {
+        self = this;
+    }
+
+    Neuroscape_MovingOrb_Client.prototype = {
+        remotelyCallable: [
+            "update",
+            "moveDirection",
+            "reset",
+            "setOrbPositionTo"
+        ],
         collisionWithEntity: function (myID, theirID, collision) {
-            if (theirID === LEFT_BOUNDARY_ID) {
-                lastCollisionTime = Date.now();
-                Entities.editEntity(_selfID, { 'velocity': { x: -1.0, y: 0.0, z: 0.0 } });
-            } else if (theirID === RIGHT_BOUNDARY_ID) {
-                lastCollisionTime = Date.now();
-                Entities.editEntity(_selfID, { 'velocity': { x: 1.0, y: 0.0, z: 0.0 } });
+            if (collision.type === 0 ) {
+                switch (theirID) {
+                    case collisionIDS[STICK_LEFT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_LEFT);
+                        break;
+                    case collisionIDS[STICK_RIGHT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_RIGHT);
+                        break;
+                    case collisionIDS[BOUNDARY_LEFT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + BOUNDARY_LEFT);
+                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_ONE]);
+                        this.moveDirection(DIRECTION_ONE);
+                        break;
+                    case collisionIDS[BOUNDARY_RIGHT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + BOUNDARY_RIGHT);
+                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_TWO]);
+                        this.moveDirection(DIRECTION_TWO);
+                        break;
+                    default:
+                }
             }
+            // log(LOG_VALUE, "collision", collision);
+            // log(LOG_VALUE, "myID:", myID);
+            // log(LOG_VALUE, "theirID:", theirID);
         },
+        moveDirection: function(direction) {
+            log(LOG_ENTER, "Moving Orb Direction on client");
+            log(LOG_VALUE, "directionOne", directionOne);
+            log(LOG_VALUE, "directionTwo", directionTwo);
 
+            var props = {};
+            if (direction === DIRECTION_ONE) {
+                props.velocity = directionOne;  
+            } else {
+                props.velocity = directionTwo;  
+            }
+            Entities.editEntity(entityID, props);
+        },
+        preload: function (id) {
+            entityID = id;
+            currentProperties = Entities.getEntityProperties(entityID);
+            name = currentProperties.name;
+            position = currentProperties.position;
+            gameZoneID = currentProperties.parentID;
+
+            userData = currentProperties.userData;
+            try {
+                userdataProperties = JSON.parse(userData);
+                DEBUG = userdataProperties.BASE_NAME.DEBUG;
+            } catch (e) {
+                log(LOG_ERROR, "ERROR READING USERDATA", e);
+            }
+            searchForEntityNames(collisionNames, position, function(children) {
+                Object.keys(children).forEach(function(name) {
+                    collisionIDS[name] = children[name];
+                });
+                log(LOG_ENTER, "FOUND ALL COLLISION NAMES");
+            }, SEARCH_FOR_NAMES_TIMEOUT);
+        },
+        reset: function () {
+            var props = {};
+            props.position = position;
+            props.velocity = vec(0,0,0);
+            Entities.editEntity(entityID, props);
+        },
+        setOrbPositionTo: function(id, param) {
+            log(LOG_VALUE, "SETTING MOVE ORB POSITION TO");
+            var positionToMoveTo = JSON.parse(param[0]);
+            var props = {};
+            props.position = positionToMoveTo;
+            Entities.editEntity(entityID, props);
+        },
         unload: function () {
-            Controller.disableMapping(MAPPING_NAME);
+        },
+        update: function (id, param) {
+            log(LOG_ARCHIVE, "RECEIVED UPDATE ON CLIENT:" + name, param);
+            var options = JSON.parse(param[0]);
+            visualCue = options.visualCue;
+            audioCue = options.audioCue;
+            directionOne = options.directionOne;
+            directionTwo = options.directionTwo;
         }
-    }
+    };
 
-    return new DiagnosticOrb();
-
+    return new Neuroscape_MovingOrb_Client();
 });

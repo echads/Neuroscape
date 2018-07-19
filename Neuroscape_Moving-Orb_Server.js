@@ -28,13 +28,19 @@
         entityID,
         name,
         gameZoneID,
+        audioCue = false, 
+        visualCue = false,
         startPosition,
+        DIRECTION_ONE = "directionOne",
+        DIRECTION_TWO = "directionTwo",
         DEBUG = false;
 
     // Collections
     var currentProperties = {},
         userData = {},
-        userdataProperties = {};
+        userdataProperties = {},
+        directionOne = {},
+        directionTwo = {};
 
     // Constructor Functions
     // Procedural Functions
@@ -46,15 +52,34 @@
     Neuroscape_MovingOrb_Server.prototype = {
         remotelyCallable: [
             "moveOrb",
+            "moveDirection",
             "reset",
-            "setOrbPositionTo"
+            "setOrbPositionTo",
+            "update"
         ],
+        collisionWithEntity: function (myID, theirID, collision) {
+            log(LOG_ENTER, "COLLISION WITH:", name);
+            log(LOG_VALUE, "collision", collision);
+            log(LOG_VALUE, "myID:", myID);
+            log(LOG_VALUE, "theirID:", theirID);
+        },
         moveOrb: function(id, param) {
             log(LOG_ARCHIVE, "Moving Orb");
             var props = {};
             var velocity = JSON.parse(param[0]);
             log(LOG_ARCHIVE, "ORB VELOCITY", velocity);
             props.velocity = velocity;            
+            Entities.editEntity(entityID, props);
+        },
+        moveDirection: function(id, param) {
+            log(LOG_ARCHIVE, "Moving Orb Direction");
+            var props = {};
+            var direction = param[0];
+            if (direction === DIRECTION_ONE) {
+                props.velocity = directionOne;  
+            } else {
+                props.velocity = directionTwo;  
+            }
             Entities.editEntity(entityID, props);
         },
         preload: function (id) {
@@ -86,6 +111,14 @@
             Entities.editEntity(entityID, props);
         },
         unload: function () {
+        },
+        update: function (id, param) {
+            log(LOG_ARCHIVE, "RECEIVED UPDATE:" + name, param);
+            var options = JSON.parse(param[0]);
+            visualCue = options.visualCue;
+            audioCue = options.audioCue;
+            directionOne = options.directionOne;
+            directionTwo = options.directionTwo;
         }
     };
 

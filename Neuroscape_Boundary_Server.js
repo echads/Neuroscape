@@ -29,6 +29,7 @@
         entityID,
         name,
         gameZoneID,
+        visualCue = true,
         restColor,
         hitColor = makeColor(80, 120, 255),
         DEBUG = false;
@@ -48,8 +49,15 @@
     Neuroscape_Boundary_Server.prototype = {
         remotelyCallable: [
             "hitColor",
-            "restColor"
+            "restColor",
+            "update"
         ],
+        collisionWithEntity: function (myID, theirID, collision) {
+            log(LOG_ENTER, "COLLISION WITH:", name);
+            log(LOG_VALUE, "collision", collision);
+            log(LOG_VALUE, "myID:", myID);
+            log(LOG_VALUE, "theirID:", theirID);
+        },
         hitColor: function(id, param) {
             log(LOG_ARCHIVE, "Hit Color");
             var props = {};
@@ -78,6 +86,11 @@
             Entities.editEntity(entityID, props);
         },
         unload: function () {
+        },
+        update: function (id, param) {
+            log(LOG_ARCHIVE, "RECEIVED UPDATE:" + name, param);
+            var options = JSON.parse(param[0]);
+            visualCue = options.visualCue;
         }
     };
 

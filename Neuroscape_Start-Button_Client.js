@@ -29,6 +29,8 @@
         name,
         gameZoneID,
         SEARCH_FOR_NAMES_TIMEOUT = 5000,
+        STICK_LEFT = "Neuroscape_Drumstick_Left",
+        STICK_RIGHT = "Neuroscape_Drumstick_Right",
         DEBUG = false;
 
     // Collections
@@ -40,8 +42,6 @@
             Neuroscape_Drumstick_Left: null,
             Neuroscape_Drumstick_Right: null
         },
-        STICK_LEFT = "Neuroscape_Drumstick_Left",
-        STICK_RIGHT = "Neuroscape_Drumstick_Right",
         collisionNames = Object.keys(collisionIDS);
 
     // Constructor Functions
@@ -78,7 +78,7 @@
         },
         onClick: function () {
             log(LOG_ENTER, "START BUTTON CLICKED");
-            Entities.callEntityServerMethod(gameZoneID, "toggleGame");
+            Entities.callEntityServerMethod(gameZoneID, "toggleGame", [MyAvatar.sessionUUID]);
         },
         clickDownOnEntity: function (entityID, mouseEvent) {
             if (mouseEvent.isLeftButton) {
@@ -92,11 +92,19 @@
             this.onClick();
         },
         collisionWithEntity: function (myID, theirID, collision) {
-            if (theirID !== (
-                collisionIDS[STICK_LEFT] ||
-                collisionIDS[STICK_RIGHT] && collision.type === 0)
-            ) {
-                this.onClick();
+            if (collision.type === 0 ) {
+                switch (theirID) {
+                    case collisionIDS[STICK_LEFT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_LEFT);
+                        this.onClick();
+
+                        break;
+                    case collisionIDS[STICK_RIGHT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_RIGHT);
+                        this.onClick();
+                        break;
+                    default:
+                }
             }
         },
         unload: function () {
