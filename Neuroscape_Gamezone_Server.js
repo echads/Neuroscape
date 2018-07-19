@@ -163,7 +163,7 @@
                     currentBeatRecord[STICK_LEFT].latencyLastBeat = currentLStickCollisionTime - previousOrbCollisionTime;
                     currentBeatRecord[STICK_LEFT].latencyCurrentBeat = currentLStickCollisionTime - currentOrbCollisionTime;
                 }
-                if (currentBeatRecord[STICK_LEFT]) {
+                if (currentBeatRecord[STICK_RIGHT]) {
                     var currentRStickCollisionTime = currentBeatRecord[STICK_RIGHT].collisionTime;
                     currentBeatRecord[STICK_RIGHT].latencyLastBeat = currentRStickCollisionTime - previousOrbCollisionTime;
                     currentBeatRecord[STICK_RIGHT].latencyCurrentBeat = currentRStickCollisionTime - currentOrbCollisionTime;

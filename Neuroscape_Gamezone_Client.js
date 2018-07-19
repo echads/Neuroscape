@@ -17,10 +17,6 @@
         searchForChildren = Util.Entity.searchForChildren,
         vec = Util.Maths.vec;
 
-    var BPM_Module = Script.require("./Neuroscape_BPM_Module.js?" + Date.now());
-    var getMilisecondsPerBeat = BPM_Module.getMilisecondsPerBeat,
-        getMetersPerSecondForBeat = BPM_Module.getMetersPerSecondForBeat;
-
     // Log Setup
     var LOG_CONFIG = {},
         LOG_ENTER = Util.Debug.LOG_ENTER,
@@ -41,21 +37,9 @@
         entityID,
         name = null,
         DEBUG = false,
-        loadedChildren = false,
-        gameInterval = null,
         overlay = null,
-        position
-        SEARCH_FOR_CHILDREN_TIMEOUT = 5000,
-        BOUNDARY_LEFT = "Neuroscape_Boundary_Left",
-        BOUNDARY_RIGHT = "Neuroscape_Boundary_Right",
-        ORB = "Neuroscape_Orb",
-        STICK_LEFT = "Neuroscape_Drumstick_Left",
-        STICK_RIGHT = "Neuroscape_Drumstick_Right",
-        START_BUTTON = "Neuroscape_StartButton",
-        DIRECTION_ONE = "directionOne",
-        DIRECTION_TWO = "directionTwo",
-        ORB_ID = "orb",
-        PLAYER_ID = "player",
+        position,
+        rotation,
         self;
 
     // Collections
@@ -73,22 +57,14 @@
         overlayInfo = {},
         childrenNames = Object.keys(childrenIDS);
 
-    // Constructor Functions
-    function CollisionRecord (id, duringBeat, collisionTime, collider) {
-        this.id = id;
-        this.duringBeat = duringBeat;
-        this.collisionTime = collisionTime;
-        this.colllider = collider;
-    };
-
     // Procedural Functions
 
     // Entity Definition
-    function Neuroscape_Gamezone_Server() {
+    function Neuroscape_Gamezone_Client() {
         self = this;
     }
 
-    Neuroscape_Gamezone_Server.prototype = {
+    Neuroscape_Gamezone_Client.prototype = {
         remotelyCallable: [
             "toggleGame",
             "updateOverlay"
@@ -98,6 +74,9 @@
             currentProperties = Entities.getEntityProperties(entityID);
             name = currentProperties.name;
             position = currentProperties.position;
+            rotation = currentProperties.rotation;
+            log(LOG_VALUE, name + " ROTATION", rotation);
+            log(LOG_VALUE, name + " Position", position);
 
             userData = currentProperties.userData;
             try {
@@ -107,25 +86,16 @@
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }
 
-            // searchForChildren(entityID, childrenNames, function(children) {
-            //     loadedChildren = true;
-            //     Object.keys(children).forEach(function(name) {
-            //         childrenIDS[name] = children[name];
-            //     });
-            //     log(LOG_ENTER, "FOUND ALL CHILDREN");
-            //     self.setOrbPositions();
-            // }, SEARCH_FOR_CHILDREN_TIMEOUT);
-
             overlay = Overlays.addOverlay("text3d", {
-                position: Vec3.sum(
-                    position, 
-                    Vec3.sum(
-                        Vec3.multiply(Quat.getForward(MyAvatar.orientation), 0.5),
-                        Vec3.multiply(Quat.getRight(MyAvatar.orientation), 0.25)
-                )
-                ),
-                // position: position,
-                rotation: MyAvatar.orientation,
+                // position: Vec3.sum(
+                //     position, 
+                //     Vec3.multiply(
+                //         Quat.getForward(rotation), 
+                //         1.5
+                //     )
+                // ),
+                position: position,
+                // rotation: MyAvatar.orientation,
                 isFacingAvatar: false,
                 lineHeight: 0.030,
                 backgroundAlpha: 0.85,
@@ -151,6 +121,5 @@
             Overlays.deleteOverlay(overlay);
         }
     };
-
-    return new Neuroscape_Gamezone_Server();
+    return new Neuroscape_Gamezone_Client();
 });

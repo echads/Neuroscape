@@ -40,8 +40,8 @@
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
         BOUNDARY_LEFT = "Neuroscape_Boundary_Left",
         BOUNDARY_RIGHT = "Neuroscape_Boundary_Right",
-        DIRECTION_ONE = "directionOne",
-        DIRECTION_TWO = "directionTwo",
+        PAD_LEFT = "Neuroscape_Drumstick_Pads_Left",
+        PAD_RIGHT = "Neuroscape_Drumstick_Pads_Right",
         DEBUG = false;
 
     // Collections
@@ -52,7 +52,9 @@
             Neuroscape_Boundary_Left: null,
             Neuroscape_Boundary_Right: null,
             Neuroscape_Drumstick_Left: null,
-            Neuroscape_Drumstick_Right: null
+            Neuroscape_Drumstick_Right: null,
+            Neuroscape_Drumstick_Pads_Left: null,
+            Neuroscape_Drumstick_Pads_Right: null
         },
         collisionNames = Object.keys(collisionIDS);
 
@@ -81,6 +83,16 @@
                         break;
                     case collisionIDS[BOUNDARY_RIGHT]:
                         log(LOG_ENTER, name + " COLLISION WITH: " + BOUNDARY_RIGHT);
+                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_TWO]);
+                        Controller.triggerHapticPulse(HAPTIC_STRENGTH, HAPTIC_DURATION, hand);
+                        break;
+                    case collisionIDS[PAD_LEFT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + PAD_LEFT);
+                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_ONE]);
+                        Controller.triggerHapticPulse(HAPTIC_STRENGTH, HAPTIC_DURATION, hand);
+                        break;
+                    case collisionIDS[PAD_RIGHT]:
+                        log(LOG_ENTER, name + " COLLISION WITH: " + PAD_RIGHT);
                         // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_TWO]);
                         Controller.triggerHapticPulse(HAPTIC_STRENGTH, HAPTIC_DURATION, hand);
                         break;

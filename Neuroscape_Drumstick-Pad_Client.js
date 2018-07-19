@@ -39,8 +39,6 @@
         LINEHEIGHT = 2,
         OVERLAY_DELETE_TIME = 200,
         LINE_WIDTH = 2.0,
-        SOUND_URL = "https://hifi-content.s3.amazonaws.com/milad/ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/bell.wav?3",
-        sound = null,
         HIT_TIME = 100,
         ORB = "Neuroscape_Orb",
         STICK_LEFT = "Neuroscape_Drumstick_Left",
@@ -102,23 +100,6 @@
                             Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
                         }
                         break;
-                    case collisionIDS[ORB]:
-                        log(LOG_ENTER, name + " COLLISION WITH: " + ORB);
-                        this.playSound(position);
-                        Entities.callEntityServerMethod(entityID, "hitColor");
-                        Script.setTimeout(function() {
-                            Entities.callEntityServerMethod(entityID, "restColor");
-                        }, HIT_TIME);
-                        
-                        var newCollision = {
-                            time: Date.now(),
-                            id: ORB
-                        }
-
-                        Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
-                        Entities.callEntityServerMethod(gameZoneID, "incrementBeat");
-                        break;
-
                     default:
                 }
             }
@@ -148,7 +129,6 @@
             position = currentProperties.position;
             gameZoneID = currentProperties.parentID;
 
-            sound = SoundCache.getSound(SOUND_URL);
             log(LOG_VALUE, "TEST", name);
             userData = currentProperties.userData;
             try {
