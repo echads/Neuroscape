@@ -74,7 +74,7 @@
             userData = currentProperties.userData;
             try {
                 userdataProperties = JSON.parse(userData);
-                DEBUG = userdataProperties.BASE_NAME.DEBUG;
+                DEBUG = userdataProperties[BASE_NAME].DEBUG;
             } catch (e) {
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }

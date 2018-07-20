@@ -46,9 +46,17 @@
         gameTimer = null,
         lastplay = null,
         sound,
-        currentBeat = 0,
-        currentBPM = 100,
+        rotation = null,
+        position = null,
+        currentBeat = 1,
+        currentSpeed = 0,
         currentDuration = 30000,
+        currentAV = null,
+        currentGameType = null,
+        currentLevel = 1,
+        currentLatency = 0,
+        prevLatency = 0,
+        finalLatency = 0,
         audioCue = true,
         visualCue = true,
         COUNT_IN = 4,
@@ -58,6 +66,8 @@
         metersPerSecond = 0,
         HIT_TIME = 100,
         SEARCH_FOR_CHILDREN_TIMEOUT = 5000,
+        previousTargetTime = 0,
+        targetTime = 0,
         activeClientID = "",
         SOUND_URL = "https://hifi-content.s3.amazonaws.com/milad/ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/bell.wav?3",
         BOUNDARY_LEFT = "Neuroscape_Boundary_Left",
@@ -65,11 +75,22 @@
         ORB = "Neuroscape_Orb",
         STICK_LEFT = "Neuroscape_Drumstick_Left",
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
+        PAD_LEFT = "Neuroscape_Drumstick_Pads_Left",
+        PAD_RIGHT = "Neuroscape_Drumstick_Pads_Right",
         START_BUTTON = "Neuroscape_StartButton",
         DIRECTION_ONE = "directionOne",
         DIRECTION_TWO = "directionTwo",
         ORB_ID = "orb",
         PLAYER_ID = "player",
+        SLOW = 750,
+        MEDIUM = 500,
+        FAST = 350,
+        ON = "on",
+        OFF = "off",
+        CONTINUOUS = "continuous",
+        AUDIO = "audio",
+        VISUAL = "visual",
+        AUDIOVISUAL = "audiovisual",
         self;
 
     // Collections
@@ -82,34 +103,45 @@
             Neuroscape_Orb: null, 
             Neuroscape_StartButton: null,
             Neuroscape_Drumstick_Left: null,
-            Neuroscape_Drumstick_Right: null
+            Neuroscape_Drumstick_Right: null,
+            Neuroscape_Drumstick_Pads_Left: null,
+            Neuroscape_Drumstick_Pads_Right: null
         },
         differenceVector = {},
         directionOne = {},
         directionTwo = {},        
-        gameType = {
-            NORMAL: 0,
-            SYNCOPATED: 1,
-            CONTINUOUS: 2
-        },
         boundaryLeftProps = {},
         boundaryRightProps = {},
         orbProps = {},
         position = {},
         collisionRecords = [],
         orbInitPosition = {},
+        gameData = {},
+        levelMap = {},
+        levelData = {},
         orbStartPosition = {},
         orbEndPosition = {},
         currentBeatRecord = {},
+        nameMap = {
+            Neuroscape_Drumstick_Left: "Stick_Left",
+            Neuroscape_Drumstick_Right: "Stick_Right",
+            Neuroscape_Orb: "Orb"
+        },
+        status = {
+            speed: currentSpeed,
+            level: currentLevel,
+            type: currentGameType,
+            av: currentAV,
+            beat: currentBeat,
+            latency: currentLatency
+        },
         childrenNames = Object.keys(childrenIDS),
         collisionCollection = [];
 
     // Constructor Functions
-    function CollisionRecord (id, duringBeat, collisionTime, collider) {
-        this.id = id;
+    function CollisionRecord (duringBeat, collisionTime) {
         this.duringBeat = duringBeat;
         this.collisionTime = collisionTime;
-        this.colllider = collider;
     };
 
     // Procedural Functions
@@ -128,7 +160,7 @@
         calculateBPMAndDistance: function(position1, position2) {
             log(LOG_VALUE, "position1", position1);
             log(LOG_VALUE, "position2", position2);
-            milisecondsPerBeat = getMilisecondsPerBeat(currentBPM);
+            milisecondsPerBeat = currentSpeed;
             log(LOG_VALUE, "milisecondsPerBeat", milisecondsPerBeat);
             distance = Vec3.distance(position2, position1);
             log(LOG_VALUE, "distance", distance);
@@ -136,12 +168,15 @@
             log(LOG_VALUE, "milisecondsPerMeter", milisecondsPerMeter);
             metersPerSecond = milisecondsPerMeter * 1000;
             log(LOG_VALUE, "metersPerSecond", metersPerSecond);
-            differenceVector = Vec3.subtract(position2, position1);
+            var localOffset = Quat.getRight(orbProps.rotation);
             log(LOG_VALUE, "differenceVector", differenceVector);
-            directionOne = Vec3.multiply(metersPerSecond, differenceVector);
+            directionOne = Vec3.multiply(metersPerSecond, localOffset);
             log(LOG_VALUE, "directionOne", directionOne);
-            directionTwo = Vec3.multiply(-metersPerSecond, differenceVector);
+            directionTwo = Vec3.multiply(-metersPerSecond, localOffset);
             log(LOG_VALUE, "directionTwo", directionTwo);
+        },
+        createLevelMap: function() {
+
         },
         getID: function(id) {
             if (id === childrenIDS[ORB]) {
@@ -152,32 +187,34 @@
             }
         },
         incrementBeat: function() {
-            var currentIndex = collisionCollection.length -1;
-            var prevIndex = collisionCollection.length -2;
+            var currentIndex = collisionCollection.length -1,
+                previousBeatRecord = null,
+                previousOrbCollisionTime = 0,
+                currentOrbCollisionTime = 0,
+                beatDelta = 0;
+
             if (currentBeat > 0) {
-                var previousBeatRecord = collisionCollection[currentIndex];
-                var previousOrbCollisionTime = previousBeatRecord[ORB].collisionTime;
-                var currentOrbCollisionTime = currentBeatRecord[ORB].collisionTime;
-                if (currentBeatRecord[STICK_LEFT]) {
-                    var currentLStickCollisionTime = currentBeatRecord[STICK_LEFT].collisionTime;
-                    currentBeatRecord[STICK_LEFT].latencyLastBeat = currentLStickCollisionTime - previousOrbCollisionTime;
-                    currentBeatRecord[STICK_LEFT].latencyCurrentBeat = currentLStickCollisionTime - currentOrbCollisionTime;
+                previousBeatRecord = collisionCollection[currentIndex];
+                if (previousBeatRecord) {
+                    previousOrbCollisionTime = previousBeatRecord[nameMap[ORB]].collisionTime;
                 }
-                if (currentBeatRecord[STICK_RIGHT]) {
-                    var currentRStickCollisionTime = currentBeatRecord[STICK_RIGHT].collisionTime;
-                    currentBeatRecord[STICK_RIGHT].latencyLastBeat = currentRStickCollisionTime - previousOrbCollisionTime;
-                    currentBeatRecord[STICK_RIGHT].latencyCurrentBeat = currentRStickCollisionTime - currentOrbCollisionTime;
+                if (currentBeatRecord[nameMap[ORB]]) {
+                    currentOrbCollisionTime = currentBeatRecord[nameMap[ORB]].collisionTime;
+                    beatDelta = currentOrbCollisionTime - previousOrbCollisionTime;
+                    currentBeatRecord[nameMap[ORB]].beatDelta = beatDelta;
                 }
-                var beatDelta = currentOrbCollisionTime - previousOrbCollisionTime;
-                currentBeatRecord[ORB].beatDelta = beatDelta;
+
+                collisionCollection.push(currentBeatRecord);
+                currentBeatRecord = {};
+                currentBeatRecord[nameMap[STICK_LEFT]] = [];
+                currentBeatRecord[nameMap[STICK_RIGHT]] = [];
+                previousTargetTime = targetTime;
+                targetTime = Date.now() + currentSpeed;
             }
-            collisionCollection.push(currentBeatRecord);
+
             currentBeat++;
-            currentBeatRecord = {};
-            var startIndex = collisionCollection.length -4 < 0 ? 0 : collisionCollection.length -4;
-            var endIndex = collisionCollection.length - 1;
-            var slicedBeatRecord = collisionCollection.slice(startIndex, endIndex);
-            Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [JSON.stringify(slicedBeatRecord)]);
+            this.updateStatus();
+            Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [JSON.stringify(status)]);
         },
         initComponents: function() {
 
@@ -209,16 +246,16 @@
         },
         preload: function (id) {
             entityID = id;
-            log(LOG_VALUE, "SOUND_URL", SOUND_URL);
             sound = SoundCache.getSound(SOUND_URL);
             currentProperties = Entities.getEntityProperties(entityID);
             name = currentProperties.name;
             position = currentProperties.position;
-
+            rotation = currentProperties.rotation;
+            
             userData = currentProperties.userData;
             try {
                 userdataProperties = JSON.parse(userData);
-                DEBUG = userdataProperties.BASE_NAME.DEBUG;
+                DEBUG = userdataProperties[BASE_NAME].DEBUG;
             } catch (e) {
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }
@@ -234,30 +271,65 @@
                 orbProps = getProps(childrenIDS[ORB]);
                 self.setOrbPositions();
             }, SEARCH_FOR_CHILDREN_TIMEOUT);
-        },
-        playSound: function(position) {
-            if (typeof position === "string") {
-                position = JSON.parse(position);
-            }
-            log(LOG_VALUE, "Now - lastplay", Date.now() - lastplay);
-            lastplay = Date.now(),
-            Audio.playSound(sound, {
-                position: position,
-                volume: 0.5
-            });
+
+            currentSpeed = FAST;
+            currentAV = AUDIOVISUAL;
+            currentGameType = CONTINUOUS;
+            currentLevel = 1;
         },
         recordCollision: function(id, param) {
             log(LOG_ARCHIVE, "IN RECORD COLLISION");
             var collisionObject = JSON.parse(param[0]);
             var collisionRecord = new CollisionRecord(
-                collisionObject.id,
                 currentBeat,
                 collisionObject.time
             );
-            currentBeatRecord[collisionObject.id] = collisionRecord;
+            log(LOG_VALUE, "CURRENT BEAT RECORD", currentBeatRecord);
+
+            if (collisionObject.id === ORB) {
+                currentBeatRecord[nameMap[collisionObject.id]] = collisionRecord;
+                this.incrementBeat();
+            }
+
+            if (currentBeat <= 0) { 
+                return;
+            }
+            if (collisionObject.id === STICK_LEFT) {
+                currentLatency = Math.abs(collisionRecord.collisionTime - targetTime);
+                prevLatency = Math.abs(collisionRecord.collisionTime - previousTargetTime);
+                finalLatency = Math.min(currentLatency, prevLatency);
+                currentBeatRecord[nameMap[STICK_LEFT]].push({
+                    collisionRecord: collisionRecord,
+                    latency: currentLatency
+                });
+
+                log(LOG_ENTER, "About to call update Stick Latency pad left", childrenIDS[PAD_LEFT]);
+                Entities.callEntityClientMethod(activeClientID, childrenIDS[PAD_LEFT], "updateStickLatency", [STICK_LEFT, String(currentSpeed), String(finalLatency)]);
+                this.updateStatus();
+                Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [JSON.stringify(status)]);
+            }
+
+            if (collisionObject.id === STICK_RIGHT) {
+                currentLatency = Math.abs(collisionRecord.collisionTime - targetTime);
+                prevLatency = Math.abs(collisionRecord.collisionTime - previousTargetTime);
+                finalLatency = Math.min(currentLatency, prevLatency);
+                currentBeatRecord[nameMap[STICK_RIGHT]].push({
+                    collisionRecord: collisionRecord,
+                    latency: currentLatency
+                });
+                log(LOG_ENTER, "About to call update Stick Latency pad Right", childrenIDS[PAD_RIGHT]);
+                Entities.callEntityClientMethod(activeClientID, childrenIDS[PAD_RIGHT], "updateStickLatency", [STICK_RIGHT, String(currentSpeed), String(finalLatency)]);
+                this.updateStatus();
+                Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [JSON.stringify(status)]);
+            }
         },
         reset: function() {
-            currentBeat = 0;
+            currentBeat = 0 - COUNT_IN;
+            Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [JSON.stringify({})]);
+            currentLatency = 0;
+            prevLatency = 0;
+            currentBeatRecord[nameMap[STICK_LEFT]] = [];
+            currentBeatRecord[nameMap[STICK_RIGHT]] = [];
         },
         setOrbPositions: function() {
             log(LOG_ENTER, "IN SET ORB POSITIONS!");
@@ -298,6 +370,7 @@
             gameRunning = true;
             stringStartPosition = JSON.stringify(orbStartPosition);
             this.reset();
+            // this.calculateBPMAndDistance(orbStartPosition, orbEndPosition);
             this.calculateBPMAndDistance(orbStartPosition, orbEndPosition);
             this.updateComponents();
             Entities.callEntityMethod(childrenIDS[START_BUTTON], "changeColor", ["red"]);
@@ -313,8 +386,14 @@
             Entities.callEntityClientMethod(activeClientID, childrenIDS[ORB], "reset");
             log(LOG_VALUE, "TOTAL VALUES", collisionCollection);
         },
+        startLevel: function(level) {
+            // #TODO
+        },
+        stopLevel: function() {
+            // #TODO
+        },
         setBPM: function(newBPM) {
-            currentBPM = newBPM;
+            currentSpeed = newBPM;
         },
         toggleGame: function(id, param) {
             activeClientID = param[0];
@@ -340,10 +419,20 @@
                 Entities.callEntityClientMethod(activeClientID, childrenIDS[entity], "update", [stringOptions]);
             });
         },
+        updateStatus: function() {
+            status = {
+                speed: currentSpeed,
+                level: currentLevel,
+                type: currentGameType,
+                av: currentAV,
+                beat: currentBeat,
+                latency: finalLatency
+            };
+        },
         unload: function () {
-            if (gameInterval) {
-                // Script.clearInterval(gameInterval);
-            }
+            // if (gameInterval) {
+            //     // Script.clearInterval(gameInterval);
+            // }
         }
     };
 

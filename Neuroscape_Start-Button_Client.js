@@ -5,7 +5,8 @@
 
     // Helper Functions
     var Util = Script.require("./Helper.js?" + Date.now());
-    var searchForEntityNames = Util.Entity.searchForEntityNames;
+    var debounce = Util.Functional.debounce();
+        searchForEntityNames = Util.Entity.searchForEntityNames;
 
 
     // Log Setup
@@ -16,10 +17,10 @@
         LOG_VALUE = Util.Debug.LOG_VALUE,
         LOG_ARCHIVE = Util.Debug.LOG_ARCHIVE;
 
-    LOG_CONFIG[LOG_ENTER] = true;
-    LOG_CONFIG[LOG_UPDATE] = true;
-    LOG_CONFIG[LOG_ERROR] = true;
-    LOG_CONFIG[LOG_VALUE] = true;
+    LOG_CONFIG[LOG_ENTER] = false;
+    LOG_CONFIG[LOG_UPDATE] = false;
+    LOG_CONFIG[LOG_ERROR] = false;
+    LOG_CONFIG[LOG_VALUE] = false;
     LOG_CONFIG[LOG_ARCHIVE] = false;
     var log = Util.Debug.log(LOG_CONFIG);
 
@@ -64,7 +65,7 @@
             userData = currentProperties.userData;
             try {
                 userdataProperties = JSON.parse(userData);
-                DEBUG = userdataProperties.BASE_NAME.DEBUG;
+                DEBUG = userdataProperties[BASE_NAME].DEBUG;
             } catch (e) {
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }
@@ -93,6 +94,9 @@
         },
         collisionWithEntity: function (myID, theirID, collision) {
             if (collision.type === 0 ) {
+                if (!debounce(500)) {
+                    return;
+                }
                 switch (theirID) {
                     case collisionIDS[STICK_LEFT]:
                         log(LOG_ENTER, name + " COLLISION WITH: " + STICK_LEFT);

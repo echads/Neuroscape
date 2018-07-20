@@ -116,7 +116,6 @@
                         }
 
                         Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
-                        Entities.callEntityServerMethod(gameZoneID, "incrementBeat");
                         break;
 
                     default:
@@ -149,11 +148,10 @@
             gameZoneID = currentProperties.parentID;
 
             sound = SoundCache.getSound(SOUND_URL);
-            log(LOG_VALUE, "TEST", name);
             userData = currentProperties.userData;
             try {
                 userdataProperties = JSON.parse(userData);
-                DEBUG = userdataProperties.BASE_NAME.DEBUG;
+                DEBUG = userdataProperties[BASE_NAME].DEBUG;
             } catch (e) {
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }

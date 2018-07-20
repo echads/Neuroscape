@@ -29,10 +29,10 @@
         LOG_VALUE = Util.Debug.LOG_VALUE,
         LOG_ARCHIVE = Util.Debug.LOG_ARCHIVE;
 
-    LOG_CONFIG[LOG_ENTER] = true;
-    LOG_CONFIG[LOG_UPDATE] = true;
-    LOG_CONFIG[LOG_ERROR] = true;
-    LOG_CONFIG[LOG_VALUE] = true;
+    LOG_CONFIG[LOG_ENTER] = false;
+    LOG_CONFIG[LOG_UPDATE] = false;
+    LOG_CONFIG[LOG_ERROR] = false;
+    LOG_CONFIG[LOG_VALUE] = false;
     LOG_CONFIG[LOG_ARCHIVE] = false;
     var log = Util.Debug.log(LOG_CONFIG);
 
@@ -43,7 +43,7 @@
         movingOrbClientScript = baseURL + "Neuroscape_Moving-Orb_Client.js" + "?v=" + Date.now(),
         movingOrbServerScript = baseURL + "Neuroscape_Moving-Orb_Server.js" + "?v=" + Date.now(),
         boundaryClientScript = baseURL + "Neuroscape_Boundary_Client.js" + "?v=" + Date.now(),
-        drumStickClientScript = baseURL + "Neuroscape_Boundary_Client.js" + "?v=" + Date.now(),
+        drumStickClientScript = baseURL + "Neuroscape_Drumstick_Client.js" + "?v=" + Date.now(),
         boundaryServerScript = baseURL + "Neuroscape_Boundary_Server.js" + "?v=" + Date.now(),
         drumStickPadClientScript = baseURL + "Neuroscape_Drumstick-Pad_Client.js" + "?v=" + Date.now(),
         gameZoneClientScript = baseURL + "Neuroscape_Gamezone_Client.js" + "?v=" + Date.now(),
@@ -75,7 +75,7 @@
         var SEARCH_RADIUS = 100;
         if (deleteNames) {
             deleteNames.forEach(function (name) {
-                var found = Entities.findEntitiesByName(name, djTableProps[1].position, SEARCH_RADIUS);
+                var found = Entities.findEntitiesByName(name, avatarPosition, SEARCH_RADIUS);
                 try {
                     if (found[0]) {
                         Entities.deleteEntity(found[0]);
@@ -163,7 +163,7 @@
         return id;
     }
 
-    function createOrbEntity(name, position, dimensions, color, userData, parentID) {
+    function createOrbEntity(name, position, rotation, dimensions, color, userData, parentID) {
         name = name || 1;
         dimensions = dimensions || vec(1, 1, 1);
         color = color || makeColor(1, 1, 1);
@@ -172,6 +172,7 @@
             name: name,
             type: "Sphere",
             position: position,
+            rotation: rotation,
             locked: false,
             script: movingOrbClientScript,
             serverScripts: movingOrbServerScript,
@@ -213,6 +214,27 @@
         return id;
     }
 
+    function createDebugstickEntity(name, position, dimensions, rotation, userData, parentID) {
+        name = name || "";
+        dimensions = dimensions || vec(1, 1, 1);
+        userData = userData || {};
+        var properties = {
+            name: name,
+            type: "Sphere",
+            position: position,
+            rotation: rotation,
+            locked: false,
+            dimensions: dimensions,
+            script: drumStickClientScript,
+            damping: 1.0,
+            collisionless: false,
+            dynamic: true,
+            userData: userData
+        };
+        var id = Entities.addEntity(properties);
+        return id;
+    }
+
     function createDrumstickPadEntity(name, position, dimensions, rotation, url, userData, parentID) {
         name = name || "";
         dimensions = dimensions || vec(1, 1, 1);
@@ -236,7 +258,7 @@
         return id;
     }
 
-    function createGameZoneEntity(name, position, dimensions, userData) {
+    function createGameZoneEntity(name, position, rotation, dimensions, userData) {
         name = name || 1;
         dimensions = dimensions || vec(1, 1, 1);
         userData = userData || {};
@@ -244,6 +266,7 @@
             name: name,
             type: "Zone",
             position: position,
+            // rotation: rotation,
             locked: false,
             script: gameZoneClientScript,
             serverScripts: gameZoneServerScript,
@@ -290,7 +313,7 @@
                 );
                 log(LOG_ARCHIVE, "boundaryPosition2", boundaryPosition)
             }
-            userData.BASE_NAME = { DEBUG: DEBUG };
+            userData[BASE_NAME] = { DEBUG: DEBUG };
 
             userData.grabbableKey = { grabbable: false };
             stringified = JSON.stringify(userData);
@@ -372,7 +395,7 @@
                     adjustedCenterPlacement
                 );
             }
-            userData.BASE_NAME = { DEBUG: DEBUG };
+            userData[BASE_NAME] = { DEBUG: DEBUG };
 
             userData.grabbableKey = { grabbable: false };
             stringified = JSON.stringify(userData);
@@ -420,7 +443,7 @@
             centerPlacement,
             vec(DISTANCE_LEFT, DISTANCE_HEIGHT, DISTANCE_BACK)
         );
-        userData.BASE_NAME = { DEBUG: DEBUG };
+        userData[BASE_NAME] = { DEBUG: DEBUG };
 
         userData.grabbableKey = { grabbable: false };
         stringified = JSON.stringify(userData);
@@ -429,6 +452,7 @@
             entID = createOrbEntity(
                 name,
                 orbPosition,
+                avatarOrientation,
                 vec(ORB_WIDTH, ORB_HEIGHT, ORB_DEPTH),
                 color,
                 stringified,
@@ -452,7 +476,112 @@
                 DISTANCE_BACK = -0.70,
                 MODEL_WIDTH = 0.0131,
                 MODEL_HEIGHT = 0.4144,
-                MODEL_DEPTH = 0.0131
+                MODEL_DEPTH = 0.0131,
+                leftHandPosition = {
+                    "x": -0.02,//-0.0881,
+                    "y": 0.135,
+                    "z": 0.02
+                },
+                leftHandRotation = Quat.fromPitchYawRollDegrees(90, -45, 0),
+                rightHandPosition = Vec3.multiplyVbyV(leftHandPosition, { x: -1, y: 1, z: 1 }),
+                rightHandRotation = Quat.fromPitchYawRollDegrees(90, 45, 0);
+
+            if (side === RIGHT) {
+                modelPosition = Vec3.sum(
+                    Vec3.multiply(
+                        Quat.getRight(avatarOrientation),
+                        DISTANCE_RIGHT
+                    ),
+                    avatarPosition
+                );
+                userData.equipHotspots = [{
+                    position: { x: 0, y: 0, z: 0 },
+                    radius: 0.25,
+                    joints: {
+                        RightHand: [
+                            rightHandPosition,
+                            rightHandRotation
+                        ],
+                        LeftHand: [
+                            leftHandPosition,
+                            leftHandRotation
+                        ]
+                    }
+                }];
+            } else {
+                modelPosition = Vec3.sum(
+                    Vec3.multiply(
+                        Quat.getRight(avatarOrientation),
+                        -DISTANCE_RIGHT
+                    ),
+                    avatarPosition
+                );
+                // userData.wearable = {
+                //     joints: {
+                //         LeftHand: [
+                //             leftHandPosition,
+                //             leftHandRotation
+                //         ]
+                //     }
+                // }
+            }
+
+            name = BASE_NAME + "Drumstick_" + side;
+            rotation = Quat.fromPitchYawRollDegrees(0, 0, 0);
+            userData.grabbableKey = { grabbable: true };
+            userData[BASE_NAME] = { DEBUG: DEBUG };
+            stringified = JSON.stringify(userData);
+            url = drumStickModelURL;
+            entID = createDrumstickModelEntity(
+                name,
+                modelPosition,
+                vec(MODEL_WIDTH, MODEL_HEIGHT, MODEL_DEPTH),
+                rotation,
+                url,
+                stringified,
+                zoneID
+            );
+            allEnts.push(entID);
+            entityNames.push(name);
+        });
+    }
+
+    function createDebugSticks() {
+        [LEFT, RIGHT].forEach(function (side) {
+            var name,
+                entID,
+                modelPosition,
+                rotation,
+                url,
+                stringified,
+                userData = {},
+                DISTANCE_RIGHT = 0.52,
+                MODEL_WIDTH = 0.0131,
+                MODEL_HEIGHT = 0.4544,
+                MODEL_DEPTH = 0.0131,
+                leftHandPosition = {
+                    "x": -MODEL_HEIGHT / 2,
+                    "y": 0.06,
+                    "z": 0.03
+                },
+                leftHandRotation = Quat.fromPitchYawRollDegrees(90, 90, 0),
+                rightHandPosition = Vec3.multiplyVbyV(leftHandPosition, { x: -1, y: 1, z: 1 }),
+                rightHandRotation = Quat.fromPitchYawRollDegrees(90, 90, 0);
+
+            userData.equipHotspots = [{
+                position: { x: 0, y: +MODEL_HEIGHT / 2, z: 0 },
+                radius: 0.25,
+                joints: {
+                    RightHand: [
+                        rightHandPosition,
+                        rightHandRotation
+                    ],
+                    LeftHand: [
+                        leftHandPosition,
+                        leftHandRotation
+                    ]
+                }
+            }];
 
             if (side === RIGHT) {
                 modelPosition = Vec3.sum(
@@ -475,17 +604,14 @@
             name = BASE_NAME + "Drumstick_" + side;
             rotation = Quat.fromPitchYawRollDegrees(0, 0, 0);
             userData.grabbableKey = { grabbable: true };
-            userData.BASE_NAME = { DEBUG: DEBUG };
+            userData[BASE_NAME] = { DEBUG: DEBUG };
             stringified = JSON.stringify(userData);
-            url = drumStickModelURL;
-            entID = createDrumstickModelEntity(
+            entID = createDebugstickEntity(
                 name,
                 modelPosition,
                 vec(MODEL_WIDTH, MODEL_HEIGHT, MODEL_DEPTH),
                 rotation,
-                url,
-                stringified,
-                zoneID
+                stringified
             );
             allEnts.push(entID);
             entityNames.push(name);
@@ -504,7 +630,7 @@
                 DISTANCE_RIGHT = 0.30,
                 DISTANCE_FORWARD = 0.30,
                 MODEL_WIDTH = 0.3,
-                MODEL_HEIGHT = 0.1,
+                MODEL_HEIGHT = 0.2,
                 MODEL_DEPTH = 0.3;
 
             if (side === RIGHT) {
@@ -528,7 +654,7 @@
             name = BASE_NAME + "Drumstick_Pads_" + side;
             rotation = Quat.fromPitchYawRollDegrees(0, 0, 0);
             userData.grabbableKey = { grabbable: false };
-            userData.BASE_NAME = { DEBUG: DEBUG };
+            userData[BASE_NAME] = { DEBUG: DEBUG };
             stringified = JSON.stringify(userData);
             url = drumStickModelURL;
             entID = createDrumstickPadEntity(
@@ -548,7 +674,6 @@
     function createGameZone() {
         var name,
             entID,
-            zonePosition,
             stringified,
             userData = {},
             HEIGHT = 0.0,
@@ -557,18 +682,14 @@
             ZONE_HEIGHT = 2,
             ZONE_DEPTH = 1.3;
 
-        zonePosition = Vec3.sum(
-            centerPlacement,
-            vec(0, HEIGHT, DISTANCE_BACK)
-        );
-
         name = BASE_NAME + "Gamezone";
         userData.grabbableKey = { grabbable: false };
-        userData.BASE_NAME = { DEBUG: DEBUG };
+        userData[BASE_NAME] = { DEBUG: DEBUG };
         stringified = JSON.stringify(userData);
         entID = createGameZoneEntity(
             name,
-            zonePosition,
+            centerPlacement,
+            avatarOrientation,
             vec(ZONE_WIDTH, ZONE_HEIGHT, ZONE_DEPTH),
             stringified
         );
@@ -599,7 +720,7 @@
             ),
             avatarPosition
         );
-        userData.BASE_NAME = { DEBUG: DEBUG };
+        userData[BASE_NAME] = { DEBUG: DEBUG };
 
         userData.grabbableKey = { grabbable: false };
         stringified = JSON.stringify(userData);
@@ -618,13 +739,14 @@
         entityNames.push(name);
     }
 
-
     // Main
+    deleteIfExists();
     createGameZone();
     createBoundaryBoxes();
     createBoundaryDecoratorBoxes();
     createOrb();
-    createDrumstickModels();
+    // createDrumstickModels();
+    createDebugSticks();
     createDrumstickPads();
     createStartButton();
 

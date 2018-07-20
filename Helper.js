@@ -171,7 +171,7 @@ function searchForChildren(parentID, names, callback, timeoutMs) {
     }, CHECK_EVERY_MS);
 }
 
-function searchForEntityNames(names, position, callback, timeoutMs) {
+function searchForEntityNames(names, position, callback, timeoutMs, outputPrint) {
     var foundEntities = {};
     names.forEach(function(name) {
         foundEntities[name] = null;
@@ -188,7 +188,9 @@ function searchForEntityNames(names, position, callback, timeoutMs) {
             var ents = Entities.findEntitiesByName(name, position, 50);
             if (ents.length === 1) {
                 foundEntities[name] = ents[0];
-                print(name, ents[0]);
+                if (outputPrint) {
+                    print(name, ents[0]);
+                }
                 names.splice(index, 1);
             }
             

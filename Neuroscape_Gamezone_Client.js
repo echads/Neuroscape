@@ -81,25 +81,22 @@
             userData = currentProperties.userData;
             try {
                 userdataProperties = JSON.parse(userData);
-                DEBUG = userdataProperties.BASE_NAME.DEBUG;
+                DEBUG = userdataProperties[BASE_NAME].DEBUG;
             } catch (e) {
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }
 
+            var localOffset = {x: 0.0, y: 0.5, z: -1.0};
+            var worldOffset = Vec3.multiplyQbyV(MyAvatar.orientation, localOffset);
+            var overlayPosition = Vec3.sum(position, worldOffset);
+ 
             overlay = Overlays.addOverlay("text3d", {
-                // position: Vec3.sum(
-                //     position, 
-                //     Vec3.multiply(
-                //         Quat.getForward(rotation), 
-                //         1.5
-                //     )
-                // ),
-                position: position,
-                // rotation: MyAvatar.orientation,
+                position: overlayPosition,
+                rotation: MyAvatar.orientation,
                 isFacingAvatar: false,
-                lineHeight: 0.030,
+                lineHeight: 0.1,
                 backgroundAlpha: 0.85,
-                text: "test"
+                text: "Hit the green box \n to start!"
             });
         },
         updateOverlay: function(id, param) {
@@ -107,7 +104,7 @@
             text = JSON.stringify(text)
                 .split(",").join("\n\t")
                 .split("{").join("\n")
-                .split("}").join("\n");
+                .split("}").join("\n").replace(/"/g,"");
 
             var properties = {
                 text: text

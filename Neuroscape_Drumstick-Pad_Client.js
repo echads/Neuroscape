@@ -30,12 +30,15 @@
         entityID,
         name,
         position,
+        dimensions,
         gameZoneID,
         restColor,
         hitColor = makeColor(80, 120, 255),
         visualCue = false,
-        lastCollision = null,
         lineOverlay = null,
+        bottomY = 0,
+        Y_MARGIN = 0.070,
+        DEBOUNCE_TIME = 500,
         LINEHEIGHT = 2,
         OVERLAY_DELETE_TIME = 200,
         LINE_WIDTH = 2.0,
@@ -60,13 +63,14 @@
     // Constructor Functions
     // Procedural Functions
     // Entity Definition
-    function Neuroscape_Boundary_Client() {
+    function Neuroscape_DrumstickPad_Client() {
         self = this;
     }
 
-    Neuroscape_Boundary_Client.prototype = {
+    Neuroscape_DrumstickPad_Client.prototype = {
         remotelyCallable: [
-            "update"
+            "update",
+            "updateStickLatency"
         ],
         clickDownOnEntity: function (entityID, mouseEvent) {
             if (mouseEvent.isLeftButton) {
@@ -75,27 +79,39 @@
         },
         collisionWithEntity: function (myID, theirID, collision) {
             if (collision.type === 0 ) {
+                log(LOG_ARCHIVE, "collision.contactPoint.y", collision.contactPoint.y);
+                log(LOG_ARCHIVE, "bottomY,", bottomY);
+                log(LOG_ARCHIVE, "collision.contactPoint.y - bottomY", collision.contactPoint.y - bottomY);
+                log(LOG_ARCHIVE, "Y_MARGIN,", Y_MARGIN);
+                log(LOG_ARCHIVE, "bottomY + Y_MARGIN,", bottomY + Y_MARGIN);
+
+
+                if (collision.contactPoint.y < bottomY + Y_MARGIN) {
+                    log(LOG_ARCHIVE, "RETURNING FROM BOTTOM COLLISION");
+                    return;
+                }
+                log(LOG_ARCHIVE, name + " Collision info", collision);
                 switch (theirID) {
                     case collisionIDS[STICK_LEFT]:
-                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_LEFT);
+                        log(LOG_ARCHIVE, name + " COLLISION WITH: " + STICK_LEFT);
 
                         var newCollision = {
                             time: Date.now(),
                             id: STICK_LEFT
                         }
-                        if (debounce(250)) {
+                        if (debounce(DEBOUNCE_TIME)) {
                             this.makeOverlay(this.getOrbPosition());
                             Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
                         }
                         break;
                     case collisionIDS[STICK_RIGHT]:
-                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_RIGHT);
+                        log(LOG_ARCHIVE, name + " COLLISION WITH: " + STICK_RIGHT);
 
                         var newCollision = {
                             time: Date.now(),
                             id: STICK_RIGHT
                         }
-                        if (debounce(250)) {
+                        if (debounce(DEBOUNCE_TIME)) {
                             this.makeOverlay(this.getOrbPosition());
                             Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
                         }
@@ -115,7 +131,7 @@
                 isDashedLine: true,
                 start: start,
                 end: end
-            }
+            };
             lineOverlay = Overlays.addOverlay("line3d", lineProps);
             Script.setTimeout(function() {
                 Overlays.deleteOverlay(lineOverlay);
@@ -127,13 +143,15 @@
             currentProperties = Entities.getEntityProperties(entityID);
             name = currentProperties.name;
             position = currentProperties.position;
+            dimensions = currentProperties.dimensions;
             gameZoneID = currentProperties.parentID;
 
-            log(LOG_VALUE, "TEST", name);
+            bottomY = position.y - (dimensions.y / 2);
+
             userData = currentProperties.userData;
             try {
                 userdataProperties = JSON.parse(userData);
-                DEBUG = userdataProperties.BASE_NAME.DEBUG;
+                DEBUG = userdataProperties[BASE_NAME].DEBUG;
             } catch (e) {
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }
@@ -145,16 +163,15 @@
                 log(LOG_ENTER, "FOUND ALL COLLISION NAMES");
             }, SEARCH_FOR_NAMES_TIMEOUT);
         },
-        playSound: function(position) {
-            if (typeof position === "string") {
-                position = JSON.parse(position);
-            }
-            Audio.playSound(sound, {
-                position: position,
-                volume: 0.5
-            });
-        },
         unload: function () {
+        },
+        updateStickLatency: function (id, param) {
+            log(LOG_ENTER, name + " IN UPDATE STICK LATENCY", param);
+            var stick = param[0];
+            var speed = param[1];
+            var latency = param[2];
+            
+            Entities.callEntityMethod(collisionIDS[stick], "editColor", [speed, latency]);
         },
         update: function (id, param) {
             log(LOG_ARCHIVE, "RECEIVED UPDATE:" + name, param);
@@ -163,5 +180,5 @@
         }
     };
 
-    return new Neuroscape_Boundary_Client();
+    return new Neuroscape_DrumstickPad_Client();
 });
