@@ -38,7 +38,7 @@
         lineOverlay = null,
         bottomY = 0,
         Y_MARGIN = 0.070,
-        DEBOUNCE_TIME = 500,
+        DEBOUNCE_TIME = 200,
         LINEHEIGHT = 2,
         OVERLAY_DELETE_TIME = 200,
         LINE_WIDTH = 2.0,
@@ -46,6 +46,13 @@
         ORB = "Neuroscape_Orb",
         STICK_LEFT = "Neuroscape_Drumstick_Left",
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
+        MOUSE_PRESS = "Mouse_Press",
+        ON = "on",
+        OFF = "off",
+        CONTINUOUS = "continuous",
+        AUDIO = "audio",
+        VISUAL = "visual",
+        AUDIOVISUAL = "audiovisual",
         SEARCH_FOR_NAMES_TIMEOUT = 5000,
         DEBUG = false;
 
@@ -118,6 +125,19 @@
                         break;
                     default:
                 }
+            }
+        },
+        clickDownOnEntity: function (entityID, mouseEvent) {
+            if (mouseEvent.isLeftButton) {
+                var newCollision = {
+                    time: Date.now(),
+                    id: MOUSE_PRESS
+                };
+                if (debounce(DEBOUNCE_TIME)) {
+                    this.makeOverlay(this.getOrbPosition());
+                    Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
+                }
+
             }
         },
         getOrbPosition: function () {

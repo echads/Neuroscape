@@ -32,6 +32,12 @@
         visualCue = true,
         restColor,
         hitColor = makeColor(80, 120, 255),
+        ON = "on",
+        OFF = "off",
+        CONTINUOUS = "continuous",
+        AUDIO = "audio",
+        VISUAL = "visual",
+        AUDIOVISUAL = "audiovisual",
         DEBUG = false;
 
     // Collections

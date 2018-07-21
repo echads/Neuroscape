@@ -40,6 +40,8 @@
         overlay = null,
         position,
         rotation,
+        OVERLAY_LINE_HEIGHT = 0.075,
+        OVERLAY_BACKGROUND_ALPHA = 0.85,
         self;
 
     // Collections
@@ -86,7 +88,7 @@
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }
 
-            var localOffset = {x: 0.0, y: 0.5, z: -1.0};
+            var localOffset = {x: 0.0, y: 0.15, z: -1.0};
             var worldOffset = Vec3.multiplyQbyV(MyAvatar.orientation, localOffset);
             var overlayPosition = Vec3.sum(position, worldOffset);
  
@@ -94,17 +96,24 @@
                 position: overlayPosition,
                 rotation: MyAvatar.orientation,
                 isFacingAvatar: false,
-                lineHeight: 0.1,
-                backgroundAlpha: 0.85,
-                text: "Hit the green box \n to start!"
+                lineHeight: OVERLAY_LINE_HEIGHT,
+                backgroundAlpha: OVERLAY_BACKGROUND_ALPHA,
+                text: "LOADING!"
             });
         },
         updateOverlay: function(id, param) {
-            var text = JSON.parse(param[0]);
-            text = JSON.stringify(text)
+            log(LOG_ENTER, "GOT UPDATE OVERLAY MESSAGE", param);
+            var text = param[0];
+            try {
+                text = JSON.parse(text);
+                text = JSON.stringify(text)
                 .split(",").join("\n\t")
                 .split("{").join("\n")
                 .split("}").join("\n").replace(/"/g,"");
+                
+            } catch (e) {
+                log(LOG_ERROR, "CAN NOT PARSE OBJECT");
+            }
 
             var properties = {
                 text: text

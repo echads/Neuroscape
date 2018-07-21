@@ -35,6 +35,9 @@
         hitColor = makeColor(80, 120, 255),
         visualCue = false,
         lastCollision = null,
+        currentBeat = 1,
+        currentAV = null,
+        currentGameType = null,
         lineOverlay = null,
         LINEHEIGHT = 2,
         OVERLAY_DELETE_TIME = 200,
@@ -46,6 +49,12 @@
         STICK_LEFT = "Neuroscape_Drumstick_Left",
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
         SEARCH_FOR_NAMES_TIMEOUT = 5000,
+        ON = "on",
+        OFF = "off",
+        CONTINUOUS = "continuous",
+        AUDIO = "audio",
+        VISUAL = "visual",
+        AUDIOVISUAL = "audiovisual",
         DEBUG = false;
 
     // Collections
@@ -104,11 +113,15 @@
                         break;
                     case collisionIDS[ORB]:
                         log(LOG_ENTER, name + " COLLISION WITH: " + ORB);
-                        this.playSound(position);
-                        Entities.callEntityServerMethod(entityID, "hitColor");
-                        Script.setTimeout(function() {
-                            Entities.callEntityServerMethod(entityID, "restColor");
-                        }, HIT_TIME);
+                        if (currentAV === AUDIOVISUAL || currentAV === AUDIO) {
+                            this.playSound(position);
+                        }
+                        if (currentAV === AUDIOVISUAL || currentAV === VISUAL) {
+                            Entities.callEntityServerMethod(entityID, "hitColor");
+                            Script.setTimeout(function() {
+                                Entities.callEntityServerMethod(entityID, "restColor");
+                            }, HIT_TIME);
+                        }
                         
                         var newCollision = {
                             time: Date.now(),
@@ -175,9 +188,9 @@
         unload: function () {
         },
         update: function (id, param) {
-            log(LOG_ARCHIVE, "RECEIVED UPDATE:" + name, param);
+            log(LOG_VALUE, name + " RECEIVED UPDATE:" + name, param);
             var options = JSON.parse(param[0]);
-            visualCue = options.visualCue;
+            currentAV = options.av;
         }
     };
 

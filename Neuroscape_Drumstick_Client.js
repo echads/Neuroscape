@@ -49,6 +49,12 @@
         BOUNDARY_RIGHT = "Neuroscape_Boundary_Right",
         PAD_LEFT = "Neuroscape_Drumstick_Pads_Left",
         PAD_RIGHT = "Neuroscape_Drumstick_Pads_Right",
+        ON = "on",
+        OFF = "off",
+        CONTINUOUS = "continuous",
+        AUDIO = "audio",
+        VISUAL = "visual",
+        AUDIOVISUAL = "audiovisual",
         DEBUG = false;
 
     // Collections

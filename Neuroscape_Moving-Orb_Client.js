@@ -39,6 +39,12 @@
         BOUNDARY_RIGHT = "Neuroscape_Boundary_Right",
         DIRECTION_ONE = "directionOne",
         DIRECTION_TWO = "directionTwo",
+        ON = "on",
+        OFF = "off",
+        CONTINUOUS = "continuous",
+        AUDIO = "audio",
+        VISUAL = "visual",
+        AUDIOVISUAL = "audiovisual",
         DEBUG = false;
 
     // Collections

@@ -38,8 +38,8 @@
 
     // Init
     var BASE_NAME = "Neuroscape_",
-        // baseURL = "https://hifi-content.s3.amazonaws.com/milad/ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/",
-        baseURL = "file:///D:/Dropbox%20(milad%20productions)/_ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/",
+        baseURL = "https://hifi-content.s3.amazonaws.com/milad/ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/",
+        // baseURL = "file:///D:/Dropbox%20(milad%20productions)/_ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/",
         movingOrbClientScript = baseURL + "Neuroscape_Moving-Orb_Client.js" + "?v=" + Date.now(),
         movingOrbServerScript = baseURL + "Neuroscape_Moving-Orb_Server.js" + "?v=" + Date.now(),
         boundaryClientScript = baseURL + "Neuroscape_Boundary_Client.js" + "?v=" + Date.now(),
@@ -627,7 +627,7 @@
                 url,
                 stringified,
                 userData = {},
-                DISTANCE_RIGHT = 0.30,
+                DISTANCE_RIGHT = 0.20,
                 DISTANCE_FORWARD = 0.30,
                 MODEL_WIDTH = 0.3,
                 MODEL_HEIGHT = 0.2,
@@ -684,7 +684,10 @@
 
         name = BASE_NAME + "Gamezone";
         userData.grabbableKey = { grabbable: false };
-        userData[BASE_NAME] = { DEBUG: DEBUG };
+        userData[BASE_NAME] = { 
+            DEBUG: DEBUG,
+            activeClientID: MyAvatar.sessionUUID
+        };
         stringified = JSON.stringify(userData);
         entID = createGameZoneEntity(
             name,
@@ -748,7 +751,7 @@
     // createDrumstickModels();
     createDebugSticks();
     createDrumstickPads();
-    createStartButton();
+    // createStartButton();
 
     Settings.setValue(BASE_NAME, entityNames);
 

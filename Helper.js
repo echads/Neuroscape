@@ -82,6 +82,7 @@ function log(configGroup) {
         return false;
     };
     return function (group, title, value, bounce) {
+
         if (configGroup[group]) {
             var printString = arguments.length === 2 || value === null
                 ? group + " :: " + title
@@ -134,7 +135,7 @@ function getProps(id, props) {
     }
 }
 
-function searchForChildren(parentID, names, callback, timeoutMs) {
+function searchForChildren(parentID, names, callback, timeoutMs, outputPrint) {
     // Map from name to entity ID for the children that have been found
     var foundEntities = {};
     for (var i = 0; i < names.length; ++i) {
@@ -149,11 +150,16 @@ function searchForChildren(parentID, names, callback, timeoutMs) {
         check++;
 
         var childrenIDs = Entities.getChildrenIDs(parentID);
-        print("\tNumber of children:", childrenIDs.length);
+        if (outputPrint) {
+            print("\tNumber of children:", childrenIDs.length);
+        }
 
         for (var i = 0; i < childrenIDs.length; ++i) {
-            print("names: " + JSON.stringify(names));
-            print("\t\t" + i + ".", Entities.getEntityProperties(childrenIDs[i]).name);
+            if (outputPrint) {
+                print("names: " + JSON.stringify(names));
+                print("\t\t" + i + ".", Entities.getEntityProperties(childrenIDs[i]).name);
+            }
+
             var id = childrenIDs[i];
             var name = Entities.getEntityProperties(id, 'name').name;
             var idx = names.indexOf(name);
@@ -406,6 +412,7 @@ module.exports = {
         LOG_UPDATE: "Log_Update",
         LOG_ERROR: "Log_Error",
         LOG_VALUE: "Log_Value",
+        LOG_VALUE_EZ: "Log_Value_EZ",
         LOG_ARCHIVE: "Log_Archive"
     },
     Entity: {
