@@ -29,9 +29,6 @@
         name,
         gameZoneID,
         position,
-        startPosition,
-        audioCue = false, 
-        visualCue = false,
         SEARCH_FOR_NAMES_TIMEOUT = 5000,
         STICK_LEFT = "Neuroscape_Drumstick_Left",
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
@@ -79,33 +76,24 @@
             if (collision.type === 0 ) {
                 switch (theirID) {
                     case collisionIDS[STICK_LEFT]:
-                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_LEFT);
+                        log(LOG_ARCHIVE, name + " COLLISION WITH: " + STICK_LEFT);
                         break;
                     case collisionIDS[STICK_RIGHT]:
-                        log(LOG_ENTER, name + " COLLISION WITH: " + STICK_RIGHT);
+                        log(LOG_ARCHIVE, name + " COLLISION WITH: " + STICK_RIGHT);
                         break;
                     case collisionIDS[BOUNDARY_LEFT]:
-                        log(LOG_ENTER, name + " COLLISION WITH: " + BOUNDARY_LEFT);
-                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_ONE]);
+                        log(LOG_ARCHIVE, name + " COLLISION WITH: " + BOUNDARY_LEFT);
                         this.moveDirection(DIRECTION_ONE);
                         break;
                     case collisionIDS[BOUNDARY_RIGHT]:
-                        log(LOG_ENTER, name + " COLLISION WITH: " + BOUNDARY_RIGHT);
-                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_TWO]);
+                        log(LOG_ARCHIVE, name + " COLLISION WITH: " + BOUNDARY_RIGHT);
                         this.moveDirection(DIRECTION_TWO);
                         break;
                     default:
                 }
             }
-            // log(LOG_VALUE, "collision", collision);
-            // log(LOG_VALUE, "myID:", myID);
-            // log(LOG_VALUE, "theirID:", theirID);
         },
         moveDirection: function(direction) {
-            log(LOG_ENTER, "Moving Orb Direction on client");
-            log(LOG_VALUE, "directionOne", directionOne);
-            log(LOG_VALUE, "directionTwo", directionTwo);
-
             var props = {};
             if (direction === DIRECTION_ONE) {
                 props.velocity = directionOne;  
@@ -153,8 +141,6 @@
         update: function (id, param) {
             log(LOG_ARCHIVE, "RECEIVED UPDATE ON CLIENT:" + name, param);
             var options = JSON.parse(param[0]);
-            visualCue = options.visualCue;
-            audioCue = options.audioCue;
             directionOne = options.directionOne;
             directionTwo = options.directionTwo;
         }

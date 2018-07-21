@@ -15,9 +15,7 @@
     // Helper Functions
     var Util = Script.require("./Helper.js?" + Date.now());
 
-    var axisAlignedOrientation = Util.Maths.axisAlignedOrientation,
-        getNameProps = Util.Entity.getNameProps,
-        inFrontOf = Util.Avatar.inFrontOf,
+    var inFrontOf = Util.Avatar.inFrontOf,
         makeColor = Util.Color.makeColor,
         vec = Util.Maths.vec;
 
@@ -48,8 +46,6 @@
         drumStickPadClientScript = baseURL + "Neuroscape_Drumstick-Pad_Client.js" + "?v=" + Date.now(),
         gameZoneClientScript = baseURL + "Neuroscape_Gamezone_Client.js" + "?v=" + Date.now(),
         gameZoneServerScript = baseURL + "Neuroscape_Gamezone_Server.js" + "?v=" + Date.now(),
-        startButtonClientScript = baseURL + "Neuroscape_Start-Button_Client.js" + "?v=" + Date.now(),
-        startButtonServerScript = baseURL + "Neuroscape_Start-Button_Server.js" + "?v=" + Date.now(),
         drumStickModelURL = "http://hifi-content.s3-us-west-1.amazonaws.com/rebecca/DrumKit/Models/Drum_Stick.obj",
         DEBUG = false,
         DISTANCE_IN_FRONT = 1,
@@ -132,30 +128,6 @@
             dynamic: false,
             collisionless: true,
             friction: 10.0,
-            parentID: parentID,
-            userData: userData
-        };
-        var id = Entities.addEntity(properties);
-        return id;
-    }
-
-    function createStartButtonEntity(name, position, rotation, dimensions, color, userData, parentID) {
-        name = name || 1;
-        dimensions = dimensions || vec(1, 1, 1);
-        color = color || makeColor(1, 1, 1);
-        userData = userData || {};
-        var properties = {
-            name: name,
-            type: "Box",
-            position: position,
-            rotation: rotation,
-            locked: false,
-            script: startButtonClientScript,
-            serverScripts: startButtonServerScript,
-            dimensions: dimensions,
-            color: color,
-            visible: true,
-            collisionless: false,
             parentID: parentID,
             userData: userData
         };
@@ -266,7 +238,6 @@
             name: name,
             type: "Zone",
             position: position,
-            // rotation: rotation,
             locked: false,
             script: gameZoneClientScript,
             serverScripts: gameZoneServerScript,
@@ -290,9 +261,7 @@
                 BOUNDARY_WIDTH = 0.025,
                 BOUNDARY_HEIGHT = 1,
                 BOUNDARY_DEPTH = 0.4,
-                DISTANCE_RIGHT = 0.65,
-                DISTANCE_HEIGHT = 0,
-                DISTANCE_BACK = 1;
+                DISTANCE_RIGHT = 0.65;
 
             if (side === RIGHT) {
                 boundaryPosition = Vec3.sum(
@@ -318,16 +287,16 @@
             userData.grabbableKey = { grabbable: false };
             stringified = JSON.stringify(userData);
             name = BASE_NAME + "Boundary_" + side;
-            color = BLUE,
-                entID = createBoundaryBoxEntity(
-                    name,
-                    boundaryPosition,
-                    avatarOrientation,
-                    vec(BOUNDARY_WIDTH, BOUNDARY_HEIGHT, BOUNDARY_DEPTH),
-                    color,
-                    stringified,
-                    zoneID
-                );
+            color = BLUE;
+            entID = createBoundaryBoxEntity(
+                name,
+                boundaryPosition,
+                avatarOrientation,
+                vec(BOUNDARY_WIDTH, BOUNDARY_HEIGHT, BOUNDARY_DEPTH),
+                color,
+                stringified,
+                zoneID
+            );
             allEnts.push(entID);
             entityNames.push(name);
         });
@@ -338,7 +307,7 @@
             var name,
                 name2,
                 entID,
-                endID2,
+                entID2,
                 boundaryPosition,
                 boundaryPosition2,
                 color,
@@ -349,15 +318,11 @@
                 BOUNDARY_WIDTH = 0.025,
                 BOUNDARY_HEIGHT = (1 - ORB_DIAMATER) / 2,
                 BOUNDARY_DEPTH = 0.4,
-                DISTANCE_RIGHT = 0.65,
-                DISTANCE_HEIGHT = 0,
-                DISTANCE_BACK = 1;
+                DISTANCE_RIGHT = 0.65;
 
             if (side === RIGHT) {
-                log(LOG_VALUE, "centerPlacement", centerPlacement);
                 var adjustedCenterPlacement = Object.assign({}, centerPlacement);
                 adjustedCenterPlacement.y = adjustedCenterPlacement.y - BOUNDARY_HEIGHT;
-                log(LOG_VALUE, "adjustedCenterPlacement", adjustedCenterPlacement);
                 boundaryPosition = Vec3.sum(
                     Vec3.multiply(
                         direction,
@@ -367,7 +332,6 @@
                 );
                 adjustedCenterPlacement = Object.assign({}, centerPlacement);
                 adjustedCenterPlacement.y = adjustedCenterPlacement.y + BOUNDARY_HEIGHT;
-                log(LOG_VALUE, "adjustedCenterPlacement", adjustedCenterPlacement);
                 boundaryPosition2 = Vec3.sum(
                     Vec3.multiply(
                         direction,
@@ -401,16 +365,16 @@
             stringified = JSON.stringify(userData);
             name = BASE_NAME + "Boundary_Decorater_Top" + side;
             name2 = BASE_NAME + "Boundary_Decorater_Bottom" + side;
-            color = BLUE,
-                entID = createBoundaryDecoraterBoxEntity(
-                    name,
-                    boundaryPosition,
-                    avatarOrientation,
-                    vec(BOUNDARY_WIDTH, BOUNDARY_HEIGHT, BOUNDARY_DEPTH),
-                    color,
-                    stringified,
-                    zoneID
-                );
+            color = BLUE;
+            entID = createBoundaryDecoraterBoxEntity(
+                name,
+                boundaryPosition,
+                avatarOrientation,
+                vec(BOUNDARY_WIDTH, BOUNDARY_HEIGHT, BOUNDARY_DEPTH),
+                color,
+                stringified,
+                zoneID
+            );
             entID2 = createBoundaryDecoraterBoxEntity(
                 name2,
                 boundaryPosition2,
@@ -460,90 +424,6 @@
             );
         allEnts.push(entID);
         entityNames.push(name);
-    }
-
-    function createDrumstickModels() {
-        [LEFT, RIGHT].forEach(function (side) {
-            var name,
-                entID,
-                modelPosition,
-                rotation,
-                url,
-                stringified,
-                userData = {},
-                DISTANCE_RIGHT = 0.52,
-                HEIGHT = 0,
-                DISTANCE_BACK = -0.70,
-                MODEL_WIDTH = 0.0131,
-                MODEL_HEIGHT = 0.4144,
-                MODEL_DEPTH = 0.0131,
-                leftHandPosition = {
-                    "x": -0.02,//-0.0881,
-                    "y": 0.135,
-                    "z": 0.02
-                },
-                leftHandRotation = Quat.fromPitchYawRollDegrees(90, -45, 0),
-                rightHandPosition = Vec3.multiplyVbyV(leftHandPosition, { x: -1, y: 1, z: 1 }),
-                rightHandRotation = Quat.fromPitchYawRollDegrees(90, 45, 0);
-
-            if (side === RIGHT) {
-                modelPosition = Vec3.sum(
-                    Vec3.multiply(
-                        Quat.getRight(avatarOrientation),
-                        DISTANCE_RIGHT
-                    ),
-                    avatarPosition
-                );
-                userData.equipHotspots = [{
-                    position: { x: 0, y: 0, z: 0 },
-                    radius: 0.25,
-                    joints: {
-                        RightHand: [
-                            rightHandPosition,
-                            rightHandRotation
-                        ],
-                        LeftHand: [
-                            leftHandPosition,
-                            leftHandRotation
-                        ]
-                    }
-                }];
-            } else {
-                modelPosition = Vec3.sum(
-                    Vec3.multiply(
-                        Quat.getRight(avatarOrientation),
-                        -DISTANCE_RIGHT
-                    ),
-                    avatarPosition
-                );
-                // userData.wearable = {
-                //     joints: {
-                //         LeftHand: [
-                //             leftHandPosition,
-                //             leftHandRotation
-                //         ]
-                //     }
-                // }
-            }
-
-            name = BASE_NAME + "Drumstick_" + side;
-            rotation = Quat.fromPitchYawRollDegrees(0, 0, 0);
-            userData.grabbableKey = { grabbable: true };
-            userData[BASE_NAME] = { DEBUG: DEBUG };
-            stringified = JSON.stringify(userData);
-            url = drumStickModelURL;
-            entID = createDrumstickModelEntity(
-                name,
-                modelPosition,
-                vec(MODEL_WIDTH, MODEL_HEIGHT, MODEL_DEPTH),
-                rotation,
-                url,
-                stringified,
-                zoneID
-            );
-            allEnts.push(entID);
-            entityNames.push(name);
-        });
     }
 
     function createDebugSticks() {
@@ -701,57 +581,14 @@
         entityNames.push(name);
     }
 
-    function createStartButton() {
-        var name,
-            entID,
-            buttonPosition,
-            color,
-            stringified,
-            userData = {},
-            direction = Quat.getRight(avatarOrientation),
-            BUTTON_WIDTH = 0.2,
-            BUTTON_HEIGHT = 0.2,
-            BUTTON_DEPTH = 0.4,
-            DISTANCE_RIGHT = 1,
-            DISTANCE_HEIGHT = 0,
-            DISTANCE_BACK = 0;
-
-        buttonPosition = Vec3.sum(
-            Vec3.multiply(
-                direction,
-                DISTANCE_RIGHT
-            ),
-            avatarPosition
-        );
-        userData[BASE_NAME] = { DEBUG: DEBUG };
-
-        userData.grabbableKey = { grabbable: false };
-        stringified = JSON.stringify(userData);
-        name = BASE_NAME + "StartButton";
-        color = GREEN,
-            entID = createStartButtonEntity(
-                name,
-                buttonPosition,
-                avatarOrientation,
-                vec(BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_DEPTH),
-                color,
-                stringified,
-                zoneID
-            );
-        allEnts.push(entID);
-        entityNames.push(name);
-    }
-
     // Main
     deleteIfExists();
     createGameZone();
     createBoundaryBoxes();
     createBoundaryDecoratorBoxes();
     createOrb();
-    // createDrumstickModels();
     createDebugSticks();
     createDrumstickPads();
-    // createStartButton();
 
     Settings.setValue(BASE_NAME, entityNames);
 

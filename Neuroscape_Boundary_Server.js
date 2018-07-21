@@ -5,10 +5,8 @@
 
     // Helper Functions
     var Util = Script.require("./Helper.js?" + Date.now());
-    var makeColor = Util.Color.makeColor,
-        searchForEntityNames = Util.Entity.searchForEntityNames,
-        vec = Util.Maths.vec;        
-
+    var makeColor = Util.Color.makeColor;
+    
     // Log Setup
     var LOG_CONFIG = {},
         LOG_ENTER = Util.Debug.LOG_ENTER,
@@ -29,7 +27,6 @@
         entityID,
         name,
         gameZoneID,
-        visualCue = true,
         restColor,
         hitColor = makeColor(80, 120, 255),
         ON = "on",
@@ -45,8 +42,6 @@
         userData = {},
         userdataProperties = {};
 
-    // Constructor Functions
-    // Procedural Functions
     // Entity Definition
     function Neuroscape_Boundary_Server() {
         self = this;
@@ -58,12 +53,6 @@
             "restColor",
             "update"
         ],
-        collisionWithEntity: function (myID, theirID, collision) {
-            log(LOG_ENTER, "COLLISION WITH:", name);
-            log(LOG_VALUE, "collision", collision);
-            log(LOG_VALUE, "myID:", myID);
-            log(LOG_VALUE, "theirID:", theirID);
-        },
         hitColor: function(id, param) {
             log(LOG_ARCHIVE, "Hit Color");
             var props = {};
@@ -96,7 +85,6 @@
         update: function (id, param) {
             log(LOG_ARCHIVE, "RECEIVED UPDATE:" + name, param);
             var options = JSON.parse(param[0]);
-            visualCue = options.visualCue;
         }
     };
 

@@ -6,9 +6,7 @@
     // Helper Functions
     var Util = Script.require("./Helper.js?" + Date.now());
     var debounce = Util.Functional.debounce(),    
-        makeColor = Util.Color.makeColor,
-        searchForEntityNames = Util.Entity.searchForEntityNames,
-        vec = Util.Maths.vec;        
+        searchForEntityNames = Util.Entity.searchForEntityNames;
 
     // Log Setup
     var LOG_CONFIG = {},
@@ -31,13 +29,7 @@
         name,
         position,
         gameZoneID,
-        restColor,
-        hitColor = makeColor(80, 120, 255),
-        visualCue = false,
-        lastCollision = null,
-        currentBeat = 1,
         currentAV = null,
-        currentGameType = null,
         lineOverlay = null,
         LINEHEIGHT = 2,
         OVERLAY_DELETE_TIME = 200,
@@ -49,6 +41,7 @@
         STICK_LEFT = "Neuroscape_Drumstick_Left",
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
         SEARCH_FOR_NAMES_TIMEOUT = 5000,
+        DEBOUNCE_TIME = 250,
         ON = "on",
         OFF = "off",
         CONTINUOUS = "continuous",
@@ -94,7 +87,7 @@
                             time: Date.now(),
                             id: STICK_LEFT
                         }
-                        if (debounce(250)) {
+                        if (debounce(DEBOUNCE_TIME)) {
                             this.makeOverlay(this.getOrbPosition());
                             Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
                         }
@@ -106,7 +99,7 @@
                             time: Date.now(),
                             id: STICK_RIGHT
                         }
-                        if (debounce(250)) {
+                        if (debounce(DEBOUNCE_TIME)) {
                             this.makeOverlay(this.getOrbPosition());
                             Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
                         }
@@ -126,7 +119,7 @@
                         var newCollision = {
                             time: Date.now(),
                             id: ORB
-                        }
+                        };
 
                         Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
                         break;

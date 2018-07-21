@@ -28,8 +28,6 @@
         entityID,
         name,
         gameZoneID,
-        audioCue = false, 
-        visualCue = false,
         startPosition,
         DIRECTION_ONE = "directionOne",
         DIRECTION_TWO = "directionTwo",
@@ -48,9 +46,7 @@
         directionOne = {},
         directionTwo = {};
 
-    // Constructor Functions
-    // Procedural Functions
-    // Entity Definition
+        // Entity Definition
     function Neuroscape_MovingOrb_Server() {
         self = this;
     }
@@ -63,12 +59,6 @@
             "setOrbPositionTo",
             "update"
         ],
-        collisionWithEntity: function (myID, theirID, collision) {
-            log(LOG_ENTER, "COLLISION WITH:", name);
-            log(LOG_VALUE, "collision", collision);
-            log(LOG_VALUE, "myID:", myID);
-            log(LOG_VALUE, "theirID:", theirID);
-        },
         moveOrb: function(id, param) {
             log(LOG_ARCHIVE, "Moving Orb");
             var props = {};

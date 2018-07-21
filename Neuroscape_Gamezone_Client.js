@@ -13,9 +13,6 @@
 
     // Helper Functions
     var Util = Script.require("./Helper.js?" + Date.now());
-    var getProps = Util.Entity.getProps,
-        searchForChildren = Util.Entity.searchForChildren,
-        vec = Util.Maths.vec;
 
     // Log Setup
     var LOG_CONFIG = {},
@@ -39,7 +36,6 @@
         DEBUG = false,
         overlay = null,
         position,
-        rotation,
         OVERLAY_LINE_HEIGHT = 0.075,
         OVERLAY_BACKGROUND_ALPHA = 0.85,
         self;
@@ -47,17 +43,7 @@
     // Collections
     var currentProperties = {},
         userData = {},
-        userdataProperties = {},
-        childrenIDS = {
-            Neuroscape_Boundary_Left: null,
-            Neuroscape_Boundary_Right: null,
-            Neuroscape_Orb: null, 
-            Neuroscape_StartButton: null,
-            Neuroscape_Drumstick_Left: null,
-            Neuroscape_Drumstick_Right: null
-        },
-        overlayInfo = {},
-        childrenNames = Object.keys(childrenIDS);
+        userdataProperties = {};
 
     // Procedural Functions
 
@@ -76,9 +62,6 @@
             currentProperties = Entities.getEntityProperties(entityID);
             name = currentProperties.name;
             position = currentProperties.position;
-            rotation = currentProperties.rotation;
-            log(LOG_VALUE, name + " ROTATION", rotation);
-            log(LOG_VALUE, name + " Position", position);
 
             userData = currentProperties.userData;
             try {
@@ -107,9 +90,9 @@
             try {
                 text = JSON.parse(text);
                 text = JSON.stringify(text)
-                .split(",").join("\n\t")
-                .split("{").join("\n")
-                .split("}").join("\n").replace(/"/g,"");
+                    .split(",").join("\n\t")
+                    .split("{").join("\n")
+                    .split("}").join("\n").replace(/"/g,"");
                 
             } catch (e) {
                 log(LOG_ERROR, "CAN NOT PARSE OBJECT");
@@ -120,8 +103,6 @@
             };
             
             Overlays.editOverlay(overlay, properties);
-        },
-        reset: function() {
         },
         unload: function () {
             Overlays.deleteOverlay(overlay);

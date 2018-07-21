@@ -13,14 +13,8 @@
 
     // Helper Functions
     var Util = Script.require("./Helper.js?" + Date.now());
-    var request = Script.require("./request.js").request;
     var getProps = Util.Entity.getProps,
-        searchForChildren = Util.Entity.searchForChildren,
-        vec = Util.Maths.vec;
-
-    var BPM_Module = Script.require("./Neuroscape_BPM_Module.js?" + Date.now());
-    var getMilisecondsPerBeat = BPM_Module.getMilisecondsPerBeat,
-        getMetersPerSecondForBeat = BPM_Module.getMetersPerSecondForBeat;
+        searchForChildren = Util.Entity.searchForChildren;
 
     // Log Setup
     var LOG_CONFIG = {},
@@ -28,7 +22,6 @@
         LOG_UPDATE = Util.Debug.LOG_UPDATE,
         LOG_ERROR = Util.Debug.LOG_ERROR,
         LOG_VALUE = Util.Debug.LOG_VALUE,
-        LOG_VALUE_EZ = Util.Debug.LOG_VALUE_EZ,
         LOG_ARCHIVE = Util.Debug.LOG_ARCHIVE;
 
     LOG_CONFIG[LOG_ENTER] = true;
@@ -50,7 +43,6 @@
         gameEndTime = null,
         gameTimer = null,
         lastplay = null,
-        sound,
         rotation = null,
         position = null,
         nextLevel = null,
@@ -75,7 +67,6 @@
         targetTime = 0,
         activeClientID = "",
         SEARCH_FOR_CHILDREN_TIMEOUT = 5000,
-        HIT_TIME = 100,
         SOUND_URL = "https://hifi-content.s3.amazonaws.com/milad/ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/bell.wav?3",
         BOUNDARY_LEFT = "Neuroscape_Boundary_Left",
         BOUNDARY_RIGHT = "Neuroscape_Boundary_Right",
@@ -85,7 +76,6 @@
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
         PAD_LEFT = "Neuroscape_Drumstick_Pads_Left",
         PAD_RIGHT = "Neuroscape_Drumstick_Pads_Right",
-        START_BUTTON = "Neuroscape_StartButton",
         DIRECTION_ONE = "directionOne",
         DIRECTION_TWO = "directionTwo",
         POST_URL = "https://neuroscape.glitch.me/json/",
@@ -116,7 +106,6 @@
             Neuroscape_Boundary_Left: null,
             Neuroscape_Boundary_Right: null,
             Neuroscape_Orb: null,
-            Neuroscape_StartButton: null,
             Neuroscape_Drumstick_Left: null,
             Neuroscape_Drumstick_Right: null,
             Neuroscape_Drumstick_Pads_Left: null,
@@ -130,9 +119,7 @@
         orbProps = {},
         position = {},
         collisionRecords = [],
-        orbInitPosition = {},
-        gameData = {
-        },
+        gameData = {},
         levelMap = {},
         levelData = {},
         orbStartPosition = {},
@@ -142,11 +129,6 @@
             Neuroscape_Drumstick_Left: "Stick_Left",
             Neuroscape_Drumstick_Right: "Stick_Right",
             Neuroscape_Orb: "Orb"
-        },
-        speedMap = {
-            SLOW: "Slow",
-            MEDIUM: "Medium",
-            FAST: "Fast"
         },
         status = {
             speed: currentSpeed,
@@ -159,15 +141,21 @@
         childrenNames = Object.keys(childrenIDS),
         collisionCollection = [],
         allLevelsData = [],
-        levels = [],
+        levels = [];
         // testLevels = ["Level_1", "Level_2", "Level_3", "Level_10", "Level_11", "Level_12", "Level_19", "Level_20", "Level_21"],
-        testLevels = ["Level_4", "Level_5"];
-
+        // testLevels = ["Level_4", "Level_5"];
 
     // Constructor Functions
     function CollisionRecord(duringBeat, collisionTime) {
         this.duringBeat = duringBeat;
         this.collisionTime = collisionTime;
+    }
+
+    function Level(level, speed, gameType, av) {
+        this.level = level;
+        this.speed = speed;
+        this.gameType = gameType;
+        this.av = av;
     }
 
     // Entity Definition
@@ -177,28 +165,17 @@
 
     Neuroscape_Gamezone_Server.prototype = {
         remotelyCallable: [
-            "toggleGame",
             "recordCollision",
             "incrementBeat"
         ],
         calculateBPMAndDistance: function (position1, position2) {
+            var localOffset = Quat.getRight(orbProps.rotation);
             milisecondsPerBeat = currentSpeed;
             distance = Vec3.distance(position2, position1);
             milisecondsPerMeter = Math.sqrt(distance) / milisecondsPerBeat;
             metersPerSecond = milisecondsPerMeter * 1000;
-            var localOffset = Quat.getRight(orbProps.rotation);
             directionOne = Vec3.multiply(metersPerSecond, localOffset);
             directionTwo = Vec3.multiply(-metersPerSecond, localOffset);
-
-            log(LOG_ARCHIVE, "position1", position1);
-            log(LOG_ARCHIVE, "position2", position2);
-            log(LOG_ARCHIVE, "milisecondsPerBeat", milisecondsPerBeat);
-            log(LOG_ARCHIVE, "distance", distance);
-            log(LOG_ARCHIVE, "milisecondsPerMeter", milisecondsPerMeter);
-            log(LOG_ARCHIVE, "metersPerSecond", metersPerSecond);
-            log(LOG_ARCHIVE, "differenceVector", differenceVector);
-            log(LOG_ARCHIVE, "directionOne", directionOne);
-            log(LOG_ARCHIVE, "directionTwo", directionTwo);
         },
         calculateLatency: function(collisionTime) {
             currentLatency = Math.abs(collisionTime - targetTime);
@@ -206,20 +183,12 @@
             finalLatency = Math.min(currentLatency, prevLatency);
         },
         createLevelMap: function () {
-            log(LOG_ENTER, "IN CREATE LEVEL MAP");
             var levelCounter = 1,
                 BASENAME = "Level_",
                 gameTypes = [ON, OFF, CONTINUOUS],
                 speeds = [SLOW, MEDIUM, FAST],
                 avs = [AUDIOVISUAL, AUDIO, VISUAL];
-            
-            function Level(level, speed, gameType, av) {
-                this.level = level;
-                this.speed = speed;
-                this.gameType = gameType;
-                this.av = av;
-            }
-            // Level(BASENAME + levelCounter, gameTypes[0], speeds[0], avs[0])
+
             speeds.forEach(function(speed) {
                 gameTypes.forEach(function(gameType) {
                     avs.forEach(function(av) {
@@ -230,14 +199,6 @@
                 });
             });
             levels = Object.keys(levelMap);
-        },
-        getID: function (id) {
-            if (id === childrenIDS[ORB]) {
-                return ORB_ID;
-            }
-            if (id === (childrenIDS[BOUNDARY_LEFT] || childrenIDS[BOUNDARY_RIGHT])) {
-                return PLAYER_ID;
-            }
         },
         incrementBeat: function () {
             var currentIndex = collisionCollection.length - 1,
@@ -262,10 +223,7 @@
                 }
 
                 collisionCollection.push(currentBeatRecord);
-                currentBeatRecord = {};
-                currentBeatRecord[nameMap[STICK_LEFT]] = [];
-                currentBeatRecord[nameMap[STICK_RIGHT]] = [];
-                currentBeatRecord[MOUSE_PRESS] = [];
+                this.resetCurrentBeatRecord();
                 previousTargetTime = targetTime;
                 if (currentGameType === OFF) {
                     targetTime = Date.now() + currentSpeed / 2;
@@ -303,7 +261,6 @@
         },
         preload: function (id) {
             entityID = id;
-            sound = SoundCache.getSound(SOUND_URL);
             currentProperties = Entities.getEntityProperties(entityID);
             name = currentProperties.name;
             position = currentProperties.position;
@@ -314,7 +271,6 @@
                 userdataProperties = JSON.parse(userData);
                 DEBUG = userdataProperties[BASE_NAME].DEBUG;
                 activeClientID = userdataProperties[BASE_NAME].activeClientID;
-
             } catch (e) {
                 log(LOG_ERROR, "ERROR READING USERDATA", e);
             }
@@ -381,7 +337,6 @@
                     latency: currentLatency
                 });
 
-                // Entities.callEntityClientMethod(activeClientID, childrenIDS[PAD_LEFT], "updateStickLatency", [STICK_LEFT, String(currentSpeed), String(finalLatency)]);
                 this.updateStatus();
                 Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [JSON.stringify(status)]);
             }
@@ -416,6 +371,10 @@
             Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [JSON.stringify({})]);
             currentLatency = 0;
             prevLatency = 0;
+            this.resetCurrentBeatRecord();
+        },
+        resetCurrentBeatRecord: function () {
+            currentBeatRecord = {};
             currentBeatRecord[nameMap[STICK_LEFT]] = [];
             currentBeatRecord[nameMap[STICK_RIGHT]] = [];
             currentBeatRecord[MOUSE_PRESS] = [];
@@ -472,9 +431,6 @@
             log(LOG_VALUE, "FINAL GAMEDATA", gameData);
         },
         startLevel: function () {
-            log(LOG_ARCHIVE, "nextLevel", nextLevel);
-            log(LOG_ARCHIVE, "levelMap", levelMap);
-
             this.storeTempTypes();
             this.updateComponents();
             this.calculateBPMAndDistance(orbStartPosition, orbEndPosition);
@@ -487,7 +443,7 @@
         },
         stopLevel: function () {
             Entities.callEntityClientMethod(activeClientID, childrenIDS[ORB], "reset");
-            // var nextLevel = levels.shift();
+
             nextLevel = levels.shift();
             if (!nextLevel) {
                 self.stopGame();
@@ -505,7 +461,6 @@
                 allLevelsData.push(levelData);
                 collisionCollection = [];
 
-                log(LOG_VALUE, "next level", nextLevel);
                 self.prepNextLevel();
 
                 var sendMessage = "";
@@ -517,23 +472,11 @@
                 Entities.callEntityClientMethod(activeClientID, entityID, "updateOverlay", [sendMessage]);
             }
         },
-        setBPM: function (newBPM) {
-            currentSpeed = newBPM;
-        },
         storeTempTypes: function () {
             tempGameType = currentGameType;
             tempAV = currentAV;
             currentGameType = DEFAULT_GAME_TYPE;
             currentAV = DEFAULT_AV;
-        },
-        toggleGame: function (id, param) {
-            log(LOG_VALUE, "activeClientID", activeClientID);
-            log(LOG_ENTER, "TOGGLEGAME CALLED");
-            if (!gameRunning) {
-                this.startGame();
-            } else {
-                this.stopGame();
-            }
         },
         updateComponents: function () {
             var options = {

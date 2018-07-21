@@ -8,8 +8,7 @@
     var clamp = Util.Maths.clamp,
         debounce = Util.Functional.debounce(),
         lerp = Util.Maths.lerp,
-        searchForEntityNames = Util.Entity.searchForEntityNames,
-        vec = Util.Maths.vec;
+        searchForEntityNames = Util.Entity.searchForEntityNames;
 
     // Log Setup
     var LOG_CONFIG = {},
@@ -32,7 +31,6 @@
         name,
         gameZoneID,
         position,
-        startPosition,
         hand = null,
         padY = 0,
         Y_MARGIN = 0.070,
@@ -42,9 +40,8 @@
         HAPTIC_DURATION = 100,
         LEFT_HAND = 0,
         RIGHT_HAND = 1,
-        STEPS = 25,
-        STICK_LEFT = "Neuroscape_Drumstick_Left",
-        STICK_RIGHT = "Neuroscape_Drumstick_Right",
+        STEPS = 20,
+        COLOR_CHANGE_INTERVAL = 40,
         BOUNDARY_LEFT = "Neuroscape_Boundary_Left",
         BOUNDARY_RIGHT = "Neuroscape_Boundary_Right",
         PAD_LEFT = "Neuroscape_Drumstick_Pads_Left",
@@ -72,10 +69,6 @@
         },
         collisionNames = Object.keys(collisionIDS);
 
-    // Constructor Functions
-    // Procedural Functions
-    
-    
     // Entity Definition
     function Neuroscape_Drumstick_Client() {
         self = this;
@@ -95,14 +88,12 @@
                 switch (theirID) {
                     case collisionIDS[BOUNDARY_LEFT]:
                         log(LOG_ARCHIVE, name + " COLLISION WITH: " + BOUNDARY_LEFT);
-                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_ONE]);
                         if (debounce(DEBOUNCE_TIME)) {
                             Controller.triggerHapticPulse(HAPTIC_STRENGTH, HAPTIC_DURATION, hand);
                         }
                         break;
                     case collisionIDS[BOUNDARY_RIGHT]:
                         log(LOG_ARCHIVE, name + " COLLISION WITH: " + BOUNDARY_RIGHT);
-                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_TWO]);
                         if (debounce(DEBOUNCE_TIME)) {
                             Controller.triggerHapticPulse(HAPTIC_STRENGTH, HAPTIC_DURATION, hand);
                         }
@@ -113,23 +104,16 @@
                             return;
                         }
                         log(LOG_ARCHIVE, name + " COLLISION WITH: " + PAD_LEFT);
-                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_ONE]);
                         if (debounce(DEBOUNCE_TIME)) {
                             Controller.triggerHapticPulse(HAPTIC_STRENGTH, HAPTIC_DURATION, hand);
                         }
                         break;
                     case collisionIDS[PAD_RIGHT]:
-                        log(LOG_ARCHIVE, "collision.contactPoint.y", collision.contactPoint.y);
-                        log(LOG_ARCHIVE, "bottomY,", padY);
-                        log(LOG_ARCHIVE, "collision.contactPoint.y - padY", collision.contactPoint.y - padY);
-                        log(LOG_ARCHIVE, "Y_MARGIN,", Y_MARGIN);
-                        log(LOG_ARCHIVE, "padY + Y_MARGIN,", padY + Y_MARGIN);
                         if (collision.contactPoint.y < padY + Y_MARGIN) {
                             log(LOG_ARCHIVE, "RETURNING FROM BOTTOM COLLISION");
                             return;
                         }
                         log(LOG_ARCHIVE, name + " COLLISION WITH: " + PAD_RIGHT);
-                        // Entities.callEntityServerMethod(entityID, "moveDirection", [DIRECTION_TWO]);
                         if (debounce(DEBOUNCE_TIME)) {
                             Controller.triggerHapticPulse(HAPTIC_STRENGTH, HAPTIC_DURATION, hand);
                         }
@@ -163,7 +147,7 @@
                     green: 0
                 }
             };
-            log(LOG_VALUE, "Event PROPERTIEs", eventProperties);
+            log(LOG_ARCHIVE, "Event PROPERTIEs", eventProperties);
             Entities.editEntity(entityID, eventProperties);
             this.getToWhite();
         },
@@ -173,7 +157,7 @@
                 green: (255 - eventProperties.color.green) / STEPS,
                 blue: (255 - eventProperties.color.blue) / STEPS
             }
-            log(LOG_VALUE, "per Setp", perStep);
+            log(LOG_ARCHIVE, "per Setp", perStep);
             var stepsLeft = STEPS;
             var colorInterval;
             colorInterval = Script.setInterval(function() {
@@ -183,14 +167,14 @@
                 eventProperties.color.red = clamp(0, 255, parseInt(perStep.red + currentRed));
                 eventProperties.color.green = clamp(0, 255, parseInt(perStep.green + currentGreen));
                 eventProperties.color.blue = clamp(0, 255, parseInt(perStep.blue + currentBlue));
-                log(LOG_VALUE, "eventProperties", eventProperties);
+                log(LOG_ARCHIVE, "eventProperties", eventProperties);
 
                 Entities.editEntity(entityID, eventProperties);
                 --stepsLeft;
                 if (stepsLeft === 0) {
                     Script.clearInterval(colorInterval);
                 }
-            }, 15);
+            }, COLOR_CHANGE_INTERVAL);
         },
         preload: function (id) {
             entityID = id;

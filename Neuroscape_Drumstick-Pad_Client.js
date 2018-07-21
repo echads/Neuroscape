@@ -6,9 +6,7 @@
     // Helper Functions
     var Util = Script.require("./Helper.js?" + Date.now());
     var debounce = Util.Functional.debounce(),    
-        makeColor = Util.Color.makeColor,
-        searchForEntityNames = Util.Entity.searchForEntityNames,
-        vec = Util.Maths.vec;        
+        searchForEntityNames = Util.Entity.searchForEntityNames;
 
     // Log Setup
     var LOG_CONFIG = {},
@@ -32,9 +30,6 @@
         position,
         dimensions,
         gameZoneID,
-        restColor,
-        hitColor = makeColor(80, 120, 255),
-        visualCue = false,
         lineOverlay = null,
         bottomY = 0,
         Y_MARGIN = 0.070,
@@ -42,7 +37,6 @@
         LINEHEIGHT = 2,
         OVERLAY_DELETE_TIME = 200,
         LINE_WIDTH = 2.0,
-        HIT_TIME = 100,
         ORB = "Neuroscape_Orb",
         STICK_LEFT = "Neuroscape_Drumstick_Left",
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
@@ -86,13 +80,6 @@
         },
         collisionWithEntity: function (myID, theirID, collision) {
             if (collision.type === 0 ) {
-                log(LOG_ARCHIVE, "collision.contactPoint.y", collision.contactPoint.y);
-                log(LOG_ARCHIVE, "bottomY,", bottomY);
-                log(LOG_ARCHIVE, "collision.contactPoint.y - bottomY", collision.contactPoint.y - bottomY);
-                log(LOG_ARCHIVE, "Y_MARGIN,", Y_MARGIN);
-                log(LOG_ARCHIVE, "bottomY + Y_MARGIN,", bottomY + Y_MARGIN);
-
-
                 if (collision.contactPoint.y < bottomY + Y_MARGIN) {
                     log(LOG_ARCHIVE, "RETURNING FROM BOTTOM COLLISION");
                     return;
