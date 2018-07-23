@@ -1,6 +1,6 @@
 // NeuroSpanwer.js
 //
-// Created by Liv Erikson and Milad Nazeri on 2018-07-16
+// Created by Milad Nazeri and Liv Erikson on 2018-07-16
 //
 // Copyright 2018 High Fidelity, Inc.
 //
@@ -566,7 +566,7 @@
         createOrb();
         createDebugSticks();
     }, CREATE_TIMEOUT)
-
+gi
     Settings.setValue(BASE_NAME, entityNames);
 
     // Cleanup

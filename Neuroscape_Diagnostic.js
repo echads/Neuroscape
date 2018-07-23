@@ -1,6 +1,6 @@
 // Neuroscape_Diagnostic.js
 //
-// Created by Milad Nazeri on 2018-06-19
+// Created by Milad Nazeri and Liv Erikson on 2018-07-16
 //
 // Copyright 2018 High Fidelity, Inc.
 //
