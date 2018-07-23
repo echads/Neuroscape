@@ -16,10 +16,10 @@
         LOG_VALUE = Util.Debug.LOG_VALUE,
         LOG_ARCHIVE = Util.Debug.LOG_ARCHIVE;
 
-    LOG_CONFIG[LOG_ENTER] = true;
-    LOG_CONFIG[LOG_UPDATE] = true;
-    LOG_CONFIG[LOG_ERROR] = true;
-    LOG_CONFIG[LOG_VALUE] = true;
+    LOG_CONFIG[LOG_ENTER] = false;
+    LOG_CONFIG[LOG_UPDATE] = false;
+    LOG_CONFIG[LOG_ERROR] = false;
+    LOG_CONFIG[LOG_VALUE] = false;
     LOG_CONFIG[LOG_ARCHIVE] = false;
     var log = Util.Debug.log(LOG_CONFIG);
 
@@ -37,6 +37,8 @@
         LINEHEIGHT = 2,
         OVERLAY_DELETE_TIME = 200,
         LINE_WIDTH = 2.0,
+        sound = null,
+        SOUND_URL = "https://hifi-content.s3.amazonaws.com/milad/ROLC/Organize/O_Projects/Hifi/Scripts/Neuroscape/drumstick.wav",
         ORB = "Neuroscape_Orb",
         STICK_LEFT = "Neuroscape_Drumstick_Left",
         STICK_RIGHT = "Neuroscape_Drumstick_Right",
@@ -94,8 +96,9 @@
                             id: STICK_LEFT
                         }
                         if (debounce(DEBOUNCE_TIME)) {
+                            this.playSound(position);
                             this.makeOverlay(this.getOrbPosition());
-                            Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
+                            Entities.callEntityServerMethod(gameZoneID, "handleCollision", [JSON.stringify(newCollision)]);
                         }
                         break;
                     case collisionIDS[STICK_RIGHT]:
@@ -106,8 +109,9 @@
                             id: STICK_RIGHT
                         }
                         if (debounce(DEBOUNCE_TIME)) {
+                            this.playSound(position);
                             this.makeOverlay(this.getOrbPosition());
-                            Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
+                            Entities.callEntityServerMethod(gameZoneID, "handleCollision", [JSON.stringify(newCollision)]);
                         }
                         break;
                     default:
@@ -121,8 +125,9 @@
                     id: MOUSE_PRESS
                 };
                 if (debounce(DEBOUNCE_TIME)) {
+                    this.playSound(position);
                     this.makeOverlay(this.getOrbPosition());
-                    Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
+                    Entities.callEntityServerMethod(gameZoneID, "handleCollision", [JSON.stringify(newCollision)]);
                 }
 
             }
@@ -145,6 +150,15 @@
                 lineOverlay = null;
             }, OVERLAY_DELETE_TIME);
         },
+        playSound: function(position) {
+            if (typeof position === "string") {
+                position = JSON.parse(position);
+            }
+            Audio.playSound(sound, {
+                position: position,
+                volume: 0.5
+            });
+        },
         preload: function (id) {
             entityID = id;
             currentProperties = Entities.getEntityProperties(entityID);
@@ -155,6 +169,7 @@
 
             bottomY = position.y - (dimensions.y / 2);
 
+            sound = SoundCache.getSound(SOUND_URL);
             userData = currentProperties.userData;
             try {
                 userdataProperties = JSON.parse(userData);

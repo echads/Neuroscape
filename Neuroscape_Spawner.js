@@ -50,10 +50,9 @@
         DEBUG = false,
         DISTANCE_IN_FRONT = 1,
         zoneID,
+        CREATE_TIMEOUT = 1000,
         LEFT = "Left",
-        RIGHT = "Right",
-        LEFT_HAND = "LeftHand",
-        RIGHT_HAND = "RightHand";
+        RIGHT = "Right";
 
     // Collections
     var allEnts = [],
@@ -156,29 +155,6 @@
             visible: true,
             collisionless: false,
             dynamic: true,
-            parentID: parentID,
-            userData: userData
-        };
-        var id = Entities.addEntity(properties);
-        return id;
-    }
-
-    function createDrumstickModelEntity(name, position, dimensions, rotation, url, userData, parentID) {
-        name = name || "";
-        dimensions = dimensions || vec(1, 1, 1);
-        userData = userData || {};
-        var properties = {
-            name: name,
-            type: "Model",
-            modelURL: url,
-            position: position,
-            script: drumStickClientScript,
-            rotation: rotation,
-            locked: false,
-            dimensions: dimensions,
-            collisionless: false,
-            dynamic: true,
-            shapeType: "simple-compound",
             parentID: parentID,
             userData: userData
         };
@@ -322,39 +298,39 @@
 
             if (side === RIGHT) {
                 var adjustedCenterPlacement = Object.assign({}, centerPlacement);
-                adjustedCenterPlacement.y = adjustedCenterPlacement.y - BOUNDARY_HEIGHT;
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y - (ORB_DIAMATER / 2) - (BOUNDARY_HEIGHT / 2);
                 boundaryPosition = Vec3.sum(
                     Vec3.multiply(
                         direction,
-                        DISTANCE_RIGHT - (ORB_DIAMATER / 2)
+                        DISTANCE_RIGHT - (BOUNDARY_WIDTH / 2) - (ORB_DIAMATER / 2)
                     ),
                     adjustedCenterPlacement
                 );
                 adjustedCenterPlacement = Object.assign({}, centerPlacement);
-                adjustedCenterPlacement.y = adjustedCenterPlacement.y + BOUNDARY_HEIGHT;
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y + (ORB_DIAMATER / 2) + (BOUNDARY_HEIGHT / 2);
                 boundaryPosition2 = Vec3.sum(
                     Vec3.multiply(
                         direction,
-                        DISTANCE_RIGHT - (ORB_DIAMATER / 2)
+                        DISTANCE_RIGHT - (BOUNDARY_WIDTH / 2) - (ORB_DIAMATER / 2)
                     ),
                     adjustedCenterPlacement
                 );
             } else {
                 var adjustedCenterPlacement = Object.assign({}, centerPlacement);
-                adjustedCenterPlacement.y = adjustedCenterPlacement.y - BOUNDARY_HEIGHT;
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y - (ORB_DIAMATER / 2) - (BOUNDARY_HEIGHT / 2);
                 boundaryPosition = Vec3.sum(
                     Vec3.multiply(
                         direction,
-                        -DISTANCE_RIGHT + (ORB_DIAMATER / 2)
+                        -DISTANCE_RIGHT + (BOUNDARY_WIDTH / 2) + (ORB_DIAMATER / 2)
                     ),
                     adjustedCenterPlacement
                 );
                 adjustedCenterPlacement = Object.assign({}, centerPlacement);
-                adjustedCenterPlacement.y = adjustedCenterPlacement.y + BOUNDARY_HEIGHT;
+                adjustedCenterPlacement.y = adjustedCenterPlacement.y + (ORB_DIAMATER / 2) + (BOUNDARY_HEIGHT / 2);
                 boundaryPosition2 = Vec3.sum(
                     Vec3.multiply(
                         direction,
-                        -DISTANCE_RIGHT + (ORB_DIAMATER / 2)
+                        -DISTANCE_RIGHT + (BOUNDARY_WIDTH / 2) + (ORB_DIAMATER / 2)
                     ),
                     adjustedCenterPlacement
                 );
@@ -503,7 +479,6 @@
             var name,
                 entID,
                 modelPosition,
-                rotation,
                 url,
                 stringified,
                 userData = {},
@@ -532,7 +507,6 @@
             }
 
             name = BASE_NAME + "Drumstick_Pads_" + side;
-            rotation = Quat.fromPitchYawRollDegrees(0, 0, 0);
             userData.grabbableKey = { grabbable: false };
             userData[BASE_NAME] = { DEBUG: DEBUG };
             stringified = JSON.stringify(userData);
@@ -541,7 +515,7 @@
                 name,
                 modelPosition,
                 vec(MODEL_WIDTH, MODEL_HEIGHT, MODEL_DEPTH),
-                rotation,
+                avatarOrientation,
                 url,
                 stringified,
                 zoneID
@@ -583,12 +557,15 @@
 
     // Main
     deleteIfExists();
+
     createGameZone();
-    createBoundaryBoxes();
-    createBoundaryDecoratorBoxes();
-    createOrb();
-    createDebugSticks();
-    createDrumstickPads();
+    Script.setTimeout(function() {
+        createDrumstickPads();
+        createBoundaryBoxes();
+        createBoundaryDecoratorBoxes();
+        createOrb();
+        createDebugSticks();
+    }, CREATE_TIMEOUT)
 
     Settings.setValue(BASE_NAME, entityNames);
 

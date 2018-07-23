@@ -4,218 +4,93 @@
     
     var EVENT_BRIDGE_OPEN_MESSAGE = "eventBridgeOpen",
         UPDATE_UI = "update_ui",
-        LOAD_JSON = "loadJSON",
+        SAVE_JSON = "saveJSON",
+        UPDATE_PLAYER_NAME = "update_player_name",
+        RESTART_GAME = "restart_game",
         EVENTBRIDGE_SETUP_DELAY = 50;
 
-    Vue.component('config', {
-        props: ["config_name"],
-        data: function(){
-            return {
-                newName: "",
-                JSONURL: "Replace with the JSON URL",
-                editing: false,
-                editingJSONURL: false,
-            }
-        },
+    Vue.component('restart-game', {
         methods: {
-            saveJSON(){
-                this.$parent.saveJSON();
-            },
-            loadJSON(url){
-                this.$parent.loadJSON(url);
-            },
-            selectURL(){
-                this.editingJSONURL = true;
-            },
-            editName(name){
-                this.editing = true;
-            },
-            goBack(){
-                this.editingJSONURL = false;
-            },
-            updateName(name){
-                this.editing = false;
+            restartGame(){
                 EventBridge.emitWebEvent(JSON.stringify({
-                    type: UPDATE_CONFIG_NAME,
-                    value: name
-                }));
-                this.newName = "";
-            },
-            changeAvatarToCamera(){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: CHANGE_AVATAR_TO_CAMERA
-                }));
-            },
-            changeAvatarToInvisible(){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: CHANGE_AVATAR_TO_INVISIBLE
-                }));
-            },
-            toggleAvatarCollisions(){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: TOGGLE_AVATAR_COLLISIONS
+                    type: RESTART_GAME
                 }));
             }
         },
         template:`
             <div class="card">
                 <div class="card-header">
-                <strong>Config Name: {{config_name}}</strong> <button class="btn-sm btn-primary mt-1 mr-1 float-right" v-if="!editing" v-on:click="editName()">Edit Name</button> 
-                    <div v-if="editing">
-                        <input id="new-name" type="text" class="form-control" v-model="newName">
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="updateName(newName)">Update Name</button>
-                    </div>
                 </div>
                 <div class="card-body">
-                    <div v-if="!editingJSONURL">
-                        <button v-if="" class="btn-sm btn-primary mt-1 mr-1" v-on:click="selectURL()">Load JSON Config</button>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="saveJSON()">Save JSON Config</button>
-                    </div>
-                    <div v-if="editingJSONURL">
-                        Go to https://kayla-camera.glitch.me/ to get the links for your saved JSONs
-                        <input id="load-json" type="text" class="form-control" v-model="JSONURL">
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="loadJSON(JSONURL)">Load JSON URL</button>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="goBack()">Go Back</button>
-                    </div>
-                    <div>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="changeAvatarToCamera()">Use Camera Avatar</button>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="changeAvatarToInvisible()">Use Invisible Avatar</button>
-                    </div>
-                    <div>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="toggleAvatarCollisions()">Toggle Avatar Collisions</button>
-                    </div>
+                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="restartGame()">Restart Game</button>
                 </div>
             </div>
         `
     })
 
-    Vue.component('listener', {
-        props: ["is_enabled", "position", "orientation"],
+    Vue.component('enter-player-name', {
         data: function(){
             return {
-                enabled: false,
+                newPlayerName: "",
+                editing: false,
+                editingJSONURL: false,
             }
         },
         methods: {
-            disableCustom(){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: DISABLE_CUSTOM_LISTENER,
-                    value: false
-                }));
-            },
-            enableCustom(){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: ENABLE_CUSTOM_LISTENER,
-                    value: true
-                }));
-            },
-            updateListening(){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: UPDATE_CUSTOM_LISTENER
-                }));
-            }
-        },
-        template: `
-            <div class="card">
-                <div class="card-header">
-                    <strong>Custom Listener</strong>
-                </div>
-                <div class="card-body">
-                    <div>
-                        <div v-if="is_enabled">
-                            <strong>Position: </strong>
-                            <br>
-                            <div>x: {{position.x.toFixed(2)}} <strong>|</strong> y: {{position.y.toFixed(2)}} <strong>|</strong> z: {{position.z.toFixed(2)}}</div>
-                            <strong>Orientation: </strong> 
-                            <br>
-                            <div>x: {{orientation.x.toFixed(2)}} <strong>|</strong> y: {{orientation.y.toFixed(2)}} <strong>|</strong> z: {{orientation.z.toFixed(2)}} <strong>|</strong> w: {{orientation.z.toFixed(2)}}</div>
-                        </div>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-if="!is_enabled" v-on:click="enableCustom()">Enable Custom</button>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-if="is_enabled" v-on:click="disableCustom()">Disable Custom</button>
-                        <button class="btn-sm btn-primary mt-1 mr-1" v-if="is_enabled" v-on:click="updateListening()">Update Listening</button>
-
-                    </div>
-                </div>
-            </div>
-        `
-    })
-
-    Vue.component('position', {
-        props: ["name", "key_press", "position", "orientation"],
-        data: function(){
-            return {
-                newKey: "",
-                newName: "",
-                editingKey: false,
-                editingName: false,
-            }
-        },
-        methods: {
-            remove(key){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: REMOVE_CAMERA_POSITION,
-                    value: key
-                }));
-            },
-            editKey(){
-                this.editingKey = true;
-            },
-            updateKey(key){
-                this.editingKey = false;
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: EDIT_CAMERA_POSITION_KEY,
-                    value: {
-                        key: this.key_press,
-                        newKey: key
-                    }
-                }));
-                this.newKey = "";
-            },
-            editName(){
-                this.editingName = true;
-            },
             updateName(name){
-                this.editingName = false;
+                this.editing = false;
                 EventBridge.emitWebEvent(JSON.stringify({
-                    type: EDIT_CAMERA_POSITION_NAME,
-                    value: {
-                        name: name,
-                        key: this.key_press
-                    }
+                    type: UPDATE_PLAYER_NAME,
+                    value: name
                 }));
-                this.newName = "";
-            },
+                this.newPlayerName = "";
+            }
         },
-        template: `
+        template:`
             <div class="card">
                 <div class="card-header">
-                    <div>
-                    <strong>{{name}}</strong> <button class="btn-sm btn-primary mt-1 mr-1 float-right" v-if="!editingName" v-on:click="editName()">Edit Name</button>
-                    </div>
-                    
-                        <div v-if="editingName">
-                            <input id="new-name" type="text" class="form-control" v-model="newName">
-                            <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="updateName(newName)">Update Name</button>
-                        </div>
                 </div>
                 <div class="card-body">
-                    <div>
-                    <strong>Key: </strong>{{key_press}} <button class="float-right btn-sm btn-primary mt-1 mr-1" v-if="!editingKey" v-on:click="editKey()">Edit Key</button>
-                        
-                        <div v-if="editingKey">
-                            <input id="new-key" type="text" class="form-control" v-model="newKey">
-                            <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="updateKey(newKey)">Update Key</button>
-                        </div>
-                        <div>
-                        <strong>Position: </strong>
-                        <br>
-                        <div>x: {{position.x.toFixed(2)}} <strong>|</strong> y: {{position.y.toFixed(2)}} <strong>|</strong> z: {{position.z.toFixed(2)}}</div>
-                        <strong>Orientation: </strong>
-                        <br>
-                        <div>x: {{orientation.x.toFixed(2)}} <strong>|</strong> y: {{orientation.y.toFixed(2)}} <strong>|</strong> z: {{orientation.z.toFixed(2)}} <strong>|</strong> w: {{orientation.z.toFixed(2)}}</div>
-                        </div>
-                    </div>
-                    <button class="btn-sm btn-primary mt-1 mr-1 float-right" v-on:click="remove(key_press)">remove</button>
+                        Please Enter Your Name
+                        <input id="enter-player-name" type="text" class="form-control" v-model="newPlayerName">
+                        <button class="btn-sm btn-primary mt-1 mr-1" v-on:click="updateName(newPlayerName)">Save Player Name</button>
+                </div>
+            </div>
+        `
+    })
+
+    Vue.component('show-message', {
+        props: ["message"],
+        methods: {
+            updateName(name){
+                this.editing = false;
+                EventBridge.emitWebEvent(JSON.stringify({
+                    type: UPDATE_PLAYER_NAME,
+                    value: name
+                }));
+                this.newPlayerName = "";
+            }
+        },
+        computed: {
+            formatedMessage() {
+                console.log("FORMATTED MESSAGES")
+                var newMessage = JSON.stringify(this.message)
+                .replace(/\\n/g, "<br>")
+                .replace(/\"/g, "")
+                .replace(/\\t/g, "    ")
+                .split(",").join("<br>\   ")
+                .split("{").join("")
+                .split("}").join("<br>").replace(/"/g,"");
+                return newMessage;
+            }
+        },
+        template:`
+            <div class="card">
+                <div class="card-header">
+
+                </div>
+                <div class="card-body" v-html="formatedMessage">
+                        {{formatedMessage}}
                 </div>
             </div>
         `
@@ -225,51 +100,63 @@
         el: '#app',
         data: {
             settings: {
-                configName: "Please name the config",
-                mapping: {},
-                listener: {
-                    isCustomListening: false,
-                    customPosition: {
-                        x: 0,
-                        y: 0,
-                        z: 0
-                    },
-                    customOrientation: {
-                        x: 0,
-                        y: 0,
-                        z: 0,
-                        w: 0
-                    }
+                playerName: "",
+                gameRunning: false,
+                message: null,
+                gameData: null,
+                ui: {
+                    enterPlayerName: true,
+                    showMessage: true,
+                    gameRunning: false,
+                    gameEnding: false
                 }
             }
-        },
-        methods: {
-            saveJSON(){
-                var url = 'https://kayla-camera.glitch.me/json';
-                $.post(url, app.settings);
-            },
-            loadJSON(link){
-                $.get(link, function(data){
-                    var newObj = convertBadJSON(data);
-                    EventBridge.emitWebEvent(JSON.stringify({
-                        type: LOAD_JSON,
-                        value: newObj
-                    }));
-                })
-                    
-                
-            },
-            createPosition(){
-                EventBridge.emitWebEvent(JSON.stringify({
-                    type: ADD_CAMERA_POSITION,
-                    value: {
-                        name: "Update the name",
-                        key: "Update the key press"
-                    }
-                }));
-            }
-        } 
+        }
     });
+
+    var test = {
+        array: {
+            test: [],
+            test: ["1", 2]
+        }
+    }
+
+    function removeEmpty(obj) {
+        Object.keys(obj).forEach(function(key) {
+            (obj[key] && Array.isArray(obj[key])) && obj[key].forEach(function(item){removeEmpty(item)}) ||
+            (obj[key] && typeof obj[key] === 'object') && removeEmpty(obj[key]) ||
+            (obj[key] === '' || obj[key] === null || obj[key].length === 0) && delete obj[key]
+        });
+        return obj;
+    };
+
+    function saveJSON(gameData){
+        var gameDataBase = Object.assign({}, gameData),
+            levels = gameDataBase.levels,
+            POST_URL = "https://neuroscape.glitch.me/json/";
+
+            $.post(POST_URL, gameData);
+        // if (levels.length < 3) {
+        //     $.post(POST_URL, gameData);
+        // } else {
+        //     var splitAmount = Math.ceil(levels.length / 4),
+        //         levels_part1 = levels.slice(0, splitAmount),
+        //         levels_part2 = levels.slice(splitAmount, splitAmount * 2),
+        //         levels_part3 = levels.slice(splitAmount * 2, splitAmount * 3),
+        //         levels_part4 = levels.slice(splitAmount * 3, levels.length - 1),
+        //         gameData_part1 = Object.assign({}, gameData, {playerName: gameData.playerName + "_" + "part1", part: 1, levelsData: levels_part1}),
+        //         gameData_part2 = Object.assign({}, gameData, {playerName: gameData.playerName + "_" + "part2", part: 2, levelsData: levels_part2}),
+        //         gameData_part3 = Object.assign({}, gameData, {playerName: gameData.playerName + "_" + "part3", part: 3, levelsData: levels_part3});
+        //         gameData_part4 = Object.assign({}, gameData, {playerName: gameData.playerName + "_" + "part4", part: 4, levelsData: levels_part4});
+            
+        //     $.post(POST_URL, gameData_part1);
+        //     $.post(POST_URL, gameData_part2);
+        //     $.post(POST_URL, gameData_part3);
+        //     $.post(POST_URL, gameData_part4);
+
+        // }
+        
+    }
 
     function onScriptEventReceived(message) {
         var data;
@@ -278,6 +165,10 @@
             switch (data.type) {
                 case UPDATE_UI:
                     app.settings = data.value;
+                    break;
+                case SAVE_JSON:
+                    saveJSON(data.value);
+                    break;
                 default:
             }
         } catch (e) {

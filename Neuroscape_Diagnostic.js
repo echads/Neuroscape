@@ -7,57 +7,53 @@
 // Distributed under the Apache License, Version 2.0.
 // See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 
-(function() {
-    // Polyfills
-    Script.require(Script.resolvePath('./Polyfills.js'));
+(function () {
+    // Polyfill
+    Script.require("./Polyfills.js?" + Date.now())();
+
+    // Helper Functions
+    var Util = Script.require("./Helper.js?" + Date.now());
+
+    // Log Setup
+    var LOG_CONFIG = {},
+        LOG_ENTER = Util.Debug.LOG_ENTER,
+        LOG_UPDATE = Util.Debug.LOG_UPDATE,
+        LOG_ERROR = Util.Debug.LOG_ERROR,
+        LOG_VALUE = Util.Debug.LOG_VALUE,
+        LOG_ARCHIVE = Util.Debug.LOG_ARCHIVE;
+
+    LOG_CONFIG[LOG_ENTER] = false;
+    LOG_CONFIG[LOG_UPDATE] = false;
+    LOG_CONFIG[LOG_ERROR] = false;
+    LOG_CONFIG[LOG_VALUE] = false;
+    LOG_CONFIG[LOG_ARCHIVE] = false;
+    var log = Util.Debug.log(LOG_CONFIG);
 
     // Init
     var isAppActive = false,
         isTabletUIOpen = false,
-        SETTINGS_STRING = "io.kayla.camera.settings",
-        LOAD_JSON = "loadJSON",
-        UPDATE_CONFIG_NAME = "updateConfigName",
-        ENABLE_CUSTOM_LISTENER = "enableCustomListener",
-        DISABLE_CUSTOM_LISTENER = "disableCustomListener",
-        UPDATE_CUSTOM_LISTENER = "updateCustomListener",
-        ADD_CAMERA_POSITION = "addCameraPosition",
-        EDIT_CAMERA_POSITION_KEY = "editCameraPositionKey",
-        REMOVE_CAMERA_POSITION = "removeCameraPosition",
-        EDIT_CAMERA_POSITION_NAME = "editCameraPositionName",
-        CHANGE_AVATAR_TO_CAMERA = "changeAvatarToCamera",
-        CHANGE_AVATAR_TO_INVISIBLE = "changeAvatarToInvisible",
-        TOGGLE_AVATAR_COLLISIONS = "toggleAvatarCollisions",
+        MESSAGE_CHANNEL = "messages.neuroscape",
+        UPDATE_PLAYER_NAME = "update_player_name",
+        SAVE_JSON = "saveJSON",
+        UPDATE_MESSAGE = "updateMessage",
+        RESTART_GAME = "restart_game",
         UPDATE_UI = "update_ui";
 
     // Collections
     var defaultSettings = {
-        configName: "Rename config",
-        mapping: {},
-        listener: {
-            isCustomListening: false,
-            customPosition: {
-                x: 0,
-                y: 0,
-                z: 0
-            },
-            customOrientation: {
-                x: 0,
-                y: 0,
-                z: 0,
-                w: 0
+            playerName: "",
+            gameRunning: false,
+            message: null,
+            ui: {
+                enterPlayerName: true,
+                showMessage: false,
+                gameRunning: false,
+                gameEnding: false
             }
-        }
-    };
-    var settings;
-    var oldSettings = Settings.getValue(SETTINGS_STRING);
-    console.log("oldSettings", JSON.stringify(oldSettings));
-    if (oldSettings === "") {
-        settings = defaultSettings;
-        Settings.setValue(SETTINGS_STRING, settings);
-    } else {
-        settings = oldSettings;
-    }
-    
+        },
+        settings = Object.assign({}, defaultSettings);
+
+
     // Helper Functions
     function setAppActive(active) {
         // Start/stop application activity.
@@ -74,8 +70,66 @@
     // Constructor Functions
 
     // Procedural Functions
-    function loadJSON(newSettings) {
-        settings = newSettings;
+    function updatePlayerName(playerName) {
+        var message = JSON.stringify({
+            type: UPDATE_PLAYER_NAME,
+            value: playerName
+        })
+        Messages.sendMessage(MESSAGE_CHANNEL, message);
+        settings.playerName = playerName;
+        settings.ui.enterPlayerName = false;
+    }
+
+    function updateMessage(message) {
+        settings.message = message;
+        settings.ui.showMessage = true;
+        doUIUpdate();
+    }
+
+    function restartGame() {
+        var message = JSON.stringify({
+            type: RESTART_GAME
+        });
+
+        Messages.sendMessage(MESSAGE_CHANNEL, message);
+        settings.playerName = "";
+        settings.ui.enterPlayerName = true;
+        settings.ui.showMessage = false;
+        settings.ui.gameEnding = false;
+    }
+
+    function saveJSON(gameData) {
+        settings.ui.gameEnding = true;
+        tablet.emitScriptEvent(JSON.stringify({
+            type: SAVE_JSON,
+            value: gameData
+        }));        
+    }
+
+    function onMessageReceived(channel, message, sender, localOnly) {
+        if (channel !== MESSAGE_CHANNEL) {
+            return;
+        }
+
+        var data;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            return;
+        }
+
+        switch (data.type) {
+            case UPDATE_MESSAGE:
+                var newMessage = data.value;
+                updateMessage(newMessage);
+                break;
+            case SAVE_JSON:
+                var newMessage = data.value;
+                saveJSON(newMessage);
+                doUIUpdate();
+                break;
+            default:
+        }
     }
 
     function setup() {
@@ -95,16 +149,21 @@
         }
         tablet.gotoHomeScreen();
         tablet.screenChanged.connect(onTabletScreenChanged);
+
+        Messages.subscribe(MESSAGE_CHANNEL);
+        Messages.messageReceived.connect(onMessageReceived);
+
+        Script.require("./Neuroscape_Spawner.js?" + Date.now());
+
     }
 
     function doUIUpdate() {
-        console.log("SETTINGs", JSON.stringify(settings));
         tablet.emitScriptEvent(JSON.stringify({
             type: UPDATE_UI,
             value: settings
         }));
     }
-    
+
     // Tablet
     var tablet = null,
         buttonName = "Neuroscape",
@@ -165,10 +224,14 @@
                 }
                 tablet.gotoHomeScreen(); // Automatically close app.
                 break;
-            case LOAD_JSON:
-                var settings = message.value;
-                loadJSON(settings);
-                updateSettings();
+            case UPDATE_PLAYER_NAME:
+                log(LOG_VALUE, "From TAblet: IN UPDATE PLAYER NAME", data);
+                var playerName = message.value;
+                updatePlayerName(playerName);
+                doUIUpdate();
+                break;
+            case RESTART_GAME:
+                restartGame();
                 doUIUpdate();
                 break;
             case CLOSE_DIALOG_MESSAGE:
@@ -195,6 +258,9 @@
             tabletButton = null;
         }
         tablet = null;
+
+        Messages.messageReceived.disconnect(onMessageReceived);
+        Messages.unsubscribe(MESSAGE_CHANNEL);
     }
 
     Script.scriptEnding.connect(scriptEnding);

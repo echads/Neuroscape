@@ -142,6 +142,8 @@ function searchForChildren(parentID, names, callback, timeoutMs, outputPrint) {
         foundEntities[names[i]] = null;
     }
 
+    
+
     const CHECK_EVERY_MS = 500;
     const maxChecks = Math.ceil(timeoutMs / CHECK_EVERY_MS);
 
@@ -153,7 +155,6 @@ function searchForChildren(parentID, names, callback, timeoutMs, outputPrint) {
         if (outputPrint) {
             print("\tNumber of children:", childrenIDs.length);
         }
-
         for (var i = 0; i < childrenIDs.length; ++i) {
             if (outputPrint) {
                 print("names: " + JSON.stringify(names));
@@ -167,6 +168,7 @@ function searchForChildren(parentID, names, callback, timeoutMs, outputPrint) {
                 foundEntities[name] = id;
                 print(name, id);
                 names.splice(idx, 1);
+                childrenIDs.splice(i, 1)
             }
         }
 

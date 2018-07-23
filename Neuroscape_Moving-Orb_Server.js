@@ -57,7 +57,9 @@
             "moveDirection",
             "reset",
             "setOrbPositionTo",
-            "update"
+            "update",
+            "turnOrbVisible",
+            "turnOrbInvisible"
         ],
         moveOrb: function(id, param) {
             log(LOG_ARCHIVE, "Moving Orb");
@@ -106,13 +108,21 @@
             props.position = positionToMoveTo;
             Entities.editEntity(entityID, props);
         },
+        turnOrbVisible: function() {
+            var props = {};
+            props.visible = true;
+            Entities.editEntity(entityID, props);
+        },
+        turnOrbInvisible: function() {
+            var props = {};
+            props.visible = false;
+            Entities.editEntity(entityID, props);
+        },
         unload: function () {
         },
         update: function (id, param) {
             log(LOG_ARCHIVE, "RECEIVED UPDATE:" + name, param);
             var options = JSON.parse(param[0]);
-            visualCue = options.visualCue;
-            audioCue = options.audioCue;
             directionOne = options.directionOne;
             directionTwo = options.directionTwo;
         }

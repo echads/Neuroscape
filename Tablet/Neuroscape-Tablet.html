@@ -11,20 +11,9 @@
 
     <body>
         <div class="container" id="app">
-            <config class="m-3" v-bind:config_name="settings.configName"></config>
-            <listener class="m-3" 
-                v-bind:is_enabled="settings.listener.isCustomListening" 
-                v-bind:position="settings.listener.customPosition" 
-                v-bind:orientation="settings.listener.customOrientation">
-            </listener>
-            <position class="m-3" 
-                v-for="n in settings.mapping" 
-                v-bind:name="n.name" 
-                v-bind:key_press="n.key" 
-                v-bind:position="n.position" 
-                v-bind:orientation="n.orientation">
-            </position>
-            <button id="new-position" v-on:click="createPosition" type="button" class="btn-sm btn-primary m-3">New Position</button>
+            <enter-player-name v-if="settings.ui.enterPlayerName"></enter-player-name>
+            <show-message v-if="settings.ui.showMessage" v-bind:message="settings.message"></show-message>
+            <restart-game v-if="settings.ui.gameEnding"></restart-game>
         </div>
         <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>

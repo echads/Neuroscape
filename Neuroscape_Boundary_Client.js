@@ -16,10 +16,10 @@
         LOG_VALUE = Util.Debug.LOG_VALUE,
         LOG_ARCHIVE = Util.Debug.LOG_ARCHIVE;
 
-    LOG_CONFIG[LOG_ENTER] = true;
-    LOG_CONFIG[LOG_UPDATE] = true;
+    LOG_CONFIG[LOG_ENTER] = false;
+    LOG_CONFIG[LOG_UPDATE] = false;
     LOG_CONFIG[LOG_ERROR] = true;
-    LOG_CONFIG[LOG_VALUE] = true;
+    LOG_CONFIG[LOG_VALUE] = false;
     LOG_CONFIG[LOG_ARCHIVE] = false;
     var log = Util.Debug.log(LOG_CONFIG);
 
@@ -61,8 +61,6 @@
         },
         collisionNames = Object.keys(collisionIDS);
 
-    // Constructor Functions
-    // Procedural Functions
     // Entity Definition
     function Neuroscape_Boundary_Client() {
         self = this;
@@ -89,7 +87,7 @@
                         }
                         if (debounce(DEBOUNCE_TIME)) {
                             this.makeOverlay(this.getOrbPosition());
-                            Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
+                            Entities.callEntityServerMethod(gameZoneID, "handleCollision", [JSON.stringify(newCollision)]);
                         }
                         break;
                     case collisionIDS[STICK_RIGHT]:
@@ -101,7 +99,7 @@
                         }
                         if (debounce(DEBOUNCE_TIME)) {
                             this.makeOverlay(this.getOrbPosition());
-                            Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
+                            Entities.callEntityServerMethod(gameZoneID, "handleCollision", [JSON.stringify(newCollision)]);
                         }
                         break;
                     case collisionIDS[ORB]:
@@ -121,7 +119,7 @@
                             id: ORB
                         };
 
-                        Entities.callEntityServerMethod(gameZoneID, "recordCollision", [JSON.stringify(newCollision)]);
+                        Entities.callEntityServerMethod(gameZoneID, "handleCollision", [JSON.stringify(newCollision)]);
                         break;
 
                     default:
